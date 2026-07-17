@@ -1,67 +1,111 @@
-markdown
+# 🛒 MyZubster – Skills Marketplace Backend
 
-# 🛒 MyZubster Marketplace
-
-Marketplace di competenze con integrazione del gateway di pagamento **MyZubster** per accettare pagamenti in Monero (XMR).
+**MyZubster-Marketplace** is the RESTful API backend for the skills marketplace. It handles users, skills, orders, commissions, and webhook integration with the Monero payment gateway.
 
 ---
 
-## 📁 Struttura del Progetto
+## 🎯 What It Does
 
-Marketplace (this repo) MyZubster (core)
-├── models/ ├── Payment gateway
-│ ├── User.js ├── Subaddress generation
-│ ├── Skill.js ├── Transaction monitoring
-│ └── ServiceOrder.js └── Exchange rate API
-├── routes/
-│ ├── users.js
-│ ├── skills.js
-│ └── orders.js
-├── middleware/auth.js
-└── server.js
-text
+- User authentication & role management (JWT)
+- Skill listing and management (CRUD)
+- Order creation and lifecycle management
+- Automated order updates via webhooks
+- Commission system for marketplace owners
+- Integration with MyZubster-Gateway for Monero payments
 
+---
+
+## 🏗️ Tech Stack
+
+- **Node.js** + **Express**
+- **Sequelize** ORM
+- **SQLite** / **PostgreSQL**
+- **JWT** authentication
+- **PM2** for production
+
+---
+
+## 🔄 Payment Flow
+Buyer creates order → Marketplace requests subaddress from Gateway
+
+Gateway generates unique Monero address
+
+Buyer sends Monero to that address
+
+Gateway detects payment (every 60s)
+
+Webhook sent to Marketplace with payment details
+
+Order status updated to "completed"
+
+Commission applied → seller receives payout
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/users/register` | Register |
+| `POST` | `/api/users/login` | Login (returns JWT) |
+| `POST` | `/api/users/become-seller` | Become seller |
+| `POST` | `/api/skills` | Create skill (seller) |
+| `GET` | `/api/skills` | List skills |
+| `POST` | `/api/orders` | Create order |
+| `GET` | `/api/orders/my-orders` | List user orders |
+| `GET` | `/api/orders/:id/payment-status` | Check payment status |
+| `POST` | `/api/webhook/order-update` | Webhook receiver (internal) |
 
 ---
 
 ## 🚀 Quick Start
 
-### 1️⃣ Start MyZubster (core)
-
 ```bash
-git clone https://github.com/DanielIoni-creator/MyZubsterAPP.git
-cd MyZubsterAPP/backend
-docker-compose up -d
-
-2️⃣ Configure and start the marketplace
-bash
-
+# Clone
 git clone https://github.com/DanielIoni-creator/MyZubster-Marketplace.git
 cd MyZubster-Marketplace
-cp .env.example .env
-# Edit .env with your MyZubster API URL and token
-npm install
-npm start
 
-The API will be available at http://localhost:4000
-🔧 API Endpoints
-Method	Endpoint	Description
-POST	/api/users/register	Register a new user
-POST	/api/users/login	Login and get JWT token
-POST	/api/users/become-seller	Become a seller
-POST	/api/skills	Publish a skill
-GET	/api/skills	List all skills
-POST	/api/orders	Create an order (buyer only)
-GET	/api/orders/my-orders	List user orders
-GET	/api/orders/:id/payment-status	Check payment status
+# Install & configure
+npm install
+cp .env.example .env
+nano .env
+
+# Run
+node server.js
+.env Example
+env
+
+PORT=4000
+DATABASE_URL=sqlite:./database.sqlite
+JWT_SECRET=your_jwt_secret
+MYZUBSTER_API_URL=http://localhost:3000/api
+MYZUBSTER_API_TOKEN=your_admin_token
+WEBHOOK_SECRET=your_webhook_secret
+COMMISSION_PERCENTAGE=2.0
+
+📁 Structure
+text
+
+MyZubster-Marketplace/
+├── server.js
+├── models/          # User, Skill, Order
+├── routes/          # auth, users, skills, orders, webhook
+├── middleware/      # JWT auth, admin check
+└── .env.example
+
 🔗 Related Projects
 
-    MyZubsterAPP — Core payment gateway → GitHub
+    MyZubster-Gateway – Monero payment gateway
 
-    MyZubster-App — Android app → GitHub
+    MyZubster-App – Mobile app
 
 📄 License
 
 MIT License
+👨‍💻 Author
 
-Built with ❤️ for the Monero community 🏘️
+Daniel Ioni – Self‑Taught Developer & Monero Advocate
+Based in Rimini, Italy. Founder of "Monero Italia" (Facebook group).
+GitHub
+
+Built with ❤️ for the Monero community.

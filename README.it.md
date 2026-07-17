@@ -1,81 +1,105 @@
-# MyZubster-Marketplace 🛒
-
-**Marketplace di competenze con pagamenti Monero via MyZubster**
-
-[![Licenza: MIT](https://img.shields.io/badge/Licenza-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
 
 ---
 
-## 📖 Cos'è questo progetto?
+### 🇮🇹 `README.it.md` (Italiano)
 
-Questo è un **fork dimostrativo** di [MyZubster](https://github.com/DanielIoni-creator/MyZubsterAPP) che mostra come integrare il gateway di pagamento in un'applicazione reale: un **marketplace di competenze**.
+```markdown
+# 🛒 MyZubster – Backend del Marketplace
 
-**Funzionalità:**
-- 👤 **Gestione utenti** — registrazione, login, autenticazione JWT
-- 🛠️ **Competenze** — pubblica, cerca, filtra
-- 💰 **Pagamenti Monero** — via MyZubster core
-- 📦 **Gestione ordini** — traccia stato e conferma pagamento
-- 👨‍💼 **Dashboard venditore** — profilo, competenze, guadagni
+**MyZubster-Marketplace** è il backend API per il marketplace di competenze. Gestisce utenti, competenze, ordini, commissioni e l'integrazione webhook con il gateway di pagamento Monero.
 
 ---
 
-## 🧩 Architettura
-Marketplace (questo repo) MyZubster (core)
-├── models/ ├── Gateway pagamenti
-│ ├── User.js ├── Generazione subaddress
-│ ├── Skill.js ├── Monitoraggio transazioni
-│ └── ServiceOrder.js └── API tasso di cambio
-├── routes/
-│ ├── users.js
-│ ├── skills.js
-│ └── orders.js
-├── middleware/auth.js
-└── server.js
-text
+## 🎯 Cosa fa
 
+- Autenticazione utenti e gestione ruoli (JWT)
+- Gestione competenze (CRUD)
+- Creazione e gestione ordini
+- Aggiornamenti automatici via webhook
+- Sistema di commissioni
+- Integrazione con MyZubster-Gateway
 
 ---
 
-## 🚀 Avvio rapido
+## 🏗️ Stack Tecnico
 
-### 1️⃣ Avvia MyZubster (core)
+- **Node.js** + **Express**
+- **Sequelize** ORM
+- **SQLite** / **PostgreSQL**
+- **JWT** autenticazione
+- **PM2** per produzione
+
+---
+
+## 🔄 Flusso Pagamenti
+Acquirente crea ordine → Marketplace richiede subaddress al Gateway
+
+Gateway genera indirizzo Monero unico
+
+Acquirente invia Monero
+
+Gateway rileva pagamento
+
+Webhook inviato al Marketplace
+
+Ordine aggiornato a "completed"
+
+Commissione applicata → venditore riceve pagamento
+
+---
+
+## 📡 API Endpoint
+
+| Metodo | Endpoint | Descrizione |
+|--------|----------|-------------|
+| `POST` | `/api/users/register` | Registrazione |
+| `POST` | `/api/users/login` | Login (restituisce JWT) |
+| `POST` | `/api/users/become-seller` | Diventa venditore |
+| `POST` | `/api/skills` | Crea competenza (venditore) |
+| `GET` | `/api/skills` | Elenca competenze |
+| `POST` | `/api/orders` | Crea ordine |
+| `GET` | `/api/orders/my-orders` | Ordini utente |
+| `GET` | `/api/orders/:id/payment-status` | Stato pagamento |
+| `POST` | `/api/webhook/order-update` | Ricevitore webhook |
+
+---
+
+## 🚀 Avvio Rapido
 
 ```bash
-git clone https://github.com/DanielIoni-creator/MyZubsterAPP.git
-cd MyZubsterAPP/backend
-docker-compose up -d
-
-2️⃣ Configura e avvia il marketplace
-bash
-
 git clone https://github.com/DanielIoni-creator/MyZubster-Marketplace.git
 cd MyZubster-Marketplace
-cp .env.example .env
-# Modifica .env con l'URL e il token di MyZubster
 npm install
-npm start
+cp .env.example .env
+Esempio .env
+env
 
-L'API sarà disponibile su http://localhost:4000
-🔧 Endpoint API
-Metodo	Endpoint	Descrizione
-POST	/api/users/register	Registra un nuovo utente
-POST	/api/users/login	Login e ottieni token JWT
-POST	/api/users/become-seller	Diventa venditore
-POST	/api/skills	Pubblica una competenza
-GET	/api/skills	Elenca tutte le competenze
-POST	/api/orders	Crea un ordine (solo acquirente)
-GET	/api/orders/my-orders	Lista ordini utente
-GET	/api/orders/:id/payment-status	Stato pagamento
-🔗 Progetti correlati
+PORT=4000
+DATABASE_URL=sqlite:./database.sqlite
+JWT_SECRET=your_jwt_secret
+MYZUBSTER_API_URL=http://localhost:3000/api
+MYZUBSTER_API_TOKEN=your_admin_token
+WEBHOOK_SECRET=your_webhook_secret
+COMMISSION_PERCENTAGE=2.0
+MyZubster-Marketplace/
+├── server.js
+├── models/          # User, Skill, Order
+├── routes/          # auth, users, skills, orders, webhook
+├── middleware/      # JWT auth, admin check
+└── .env.example
+🔗 Progetti Correlati
 
-    MyZubsterAPP — Core gateway pagamenti → GitHub
+    MyZubster-Gateway – Gateway pagamenti
 
-    MyZubster-App — App Android → GitHub
+    MyZubster-App – App mobile
 
 📄 Licenza
 
-Licenza MIT
+MIT License
+👨‍💻 Autore
 
-Realizzato con ❤️ per la comunità Monero 🏘️
+Daniel Ioni – Sviluppatore Autodidatta & Monero Advocate
+Basato a Rimini, Italia. Fondatore di "Monero Italia" (gruppo Facebook).
+GitHub
+
+Realizzato con ❤️ per la community Monero.
