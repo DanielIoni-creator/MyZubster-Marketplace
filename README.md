@@ -48,7 +48,7 @@ GET	/api/orders/:id/payment-status	Check payment status
 
     MyZubsterAPP — Core payment gateway → GitHub
 
-    MyZubster-App — Android app for this marketplace → GitHub
+    MyZubster-App — Android app → GitHub
 
 📄 License
 
