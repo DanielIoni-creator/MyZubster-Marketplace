@@ -1,3 +1,13 @@
+markdown
+
+# 🛒 MyZubster Marketplace
+
+Marketplace di competenze con integrazione del gateway di pagamento **MyZubster** per accettare pagamenti in Monero (XMR).
+
+---
+
+## 📁 Struttura del Progetto
+
 Marketplace (this repo) MyZubster (core)
 ├── models/ ├── Payment gateway
 │ ├── User.js ├── Subaddress generation

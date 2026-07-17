@@ -1,48 +1,40 @@
 // middleware/auth.js
-const jwtService = require('../services/jwtService');
+const jwt = require('jsonwebtoken');
+const { User } = require('../models');
 
-// Middleware per verificare il token JWT
-const authenticate = async (req, res, next) => {
+const JWT_SECRET = process.env.JWT_SECRET || 'marketplace_jwt_secret';
+
+async function auth(req, res, next) {
   try {
-    // Prendi il token dall'header Authorization
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'Token mancante o formato non valido. Usa: Bearer <token>'
-      });
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Token mancante' });
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwtService.verifyToken(token);
-
-    if (!decoded) {
-      return res.status(401).json({ error: 'Token non valido o scaduto' });
+    if (!token) {
+      return res.status(401).json({ error: 'Token non valido' });
     }
 
-    // Aggiungi i dati dell'utente alla request
-    req.user = {
-      id: decoded.userId,
-      email: decoded.email,
-      role: decoded.role
-    };
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findByPk(decoded.id);
 
+    if (!user) {
+      return res.status(401).json({ error: 'Utente non trovato' });
+    }
+
+    req.user = user;
     next();
   } catch (error) {
-    console.error('Errore autenticazione:', error);
-    return res.status(500).json({ error: 'Errore interno del server' });
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token scaduto' });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Token non valido' });
+    }
+    console.error('❌ Errore auth:', error);
+    res.status(500).json({ error: 'Errore autenticazione' });
   }
-};
+}
 
-// Middleware per verificare che l'utente sia admin
-const authorizeAdmin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
-    next();
-  } else {
-    res.status(403).json({ error: 'Accesso negato. Permessi amministratore richiesti.' });
-  }
-};
-
-module.exports = {
-  authenticate,
-  authorizeAdmin
-};
+module.exports = auth;

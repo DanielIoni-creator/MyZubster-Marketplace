@@ -1,22 +1,67 @@
 // routes/auth.js
 const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { User } = require('../models');
+const auth = require('../middleware/auth');
+
 const router = express.Router();
-const authController = require('../controllers/authController');
-const { authenticate } = require('../middleware/auth');
+const JWT_SECRET = process.env.JWT_SECRET || 'marketplace_jwt_secret';
 
-// POST /api/auth/register - Registrazione
-router.post('/register', authController.register);
+// POST /api/auth/login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email e password obbligatori' });
+    }
 
-// POST /api/auth/login - Login
-router.post('/login', authController.login);
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ error: 'Credenziali non valide' });
+    }
 
-// POST /api/auth/logout - Logout (protetto)
-router.post('/logout', authenticate, authController.logout);
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Credenziali non valide' });
+    }
 
-// GET /api/auth/profile - Profilo (protetto)
-router.get('/profile', authenticate, authController.getProfile);
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
-// PUT /api/auth/profile - Aggiorna profilo (protetto)
-router.put('/profile', authenticate, authController.updateProfile);
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        fullName: user.fullName,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('❌ Errore login:', error);
+    res.status(500).json({ error: 'Errore login' });
+  }
+});
+
+// GET /api/auth/me
+router.get('/me', auth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'email', 'username', 'fullName', 'role', 'isActive']
+    });
+    if (!user) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+    res.json({ user });
+  } catch (error) {
+    console.error('❌ Errore profilo:', error);
+    res.status(500).json({ error: 'Errore recupero profilo' });
+  }
+});
 
 module.exports = router;
