@@ -6,7 +6,7 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// ===== RECUPERA TOKEN IN MODO ROBUSTO =====
+// ===== CONFIGURAZIONE =====
 const MYZUBSTER_API_URL =
   global.MYZUBSTER_API_URL ||
   process.env.MYZUBSTER_API_URL ||
@@ -17,9 +17,6 @@ const MYZUBSTER_API_TOKEN =
   process.env.MYZUBSTER_API_TOKEN ||
   null;
 
-console.log('🔍 [ORDERS.JS] Token:', MYZUBSTER_API_TOKEN ? '✅ PRESENTE' : '❌ MANCANTE');
-console.log('🔍 [ORDERS.JS] URL:', MYZUBSTER_API_URL);
-
 // ===== CREA ORDINE =====
 router.post('/', auth, async (req, res) => {
   try {
@@ -29,10 +26,7 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'SkillId obbligatorio' });
     }
 
-    const skill = await Skill.findByPk(skillId, {
-      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'email'] }]
-    });
-
+    const skill = await Skill.findByPk(skillId);
     if (!skill) {
       return res.status(404).json({ error: 'Competenza non trovata' });
     }
@@ -45,15 +39,12 @@ router.post('/', auth, async (req, res) => {
     const orderCurrency = currency || skill.currency || 'USD';
 
     if (!MYZUBSTER_API_TOKEN) {
-      console.error('❌ Token mancante in routes/orders.js');
       return res.status(500).json({
-        error: 'MYZUBSTER_API_TOKEN non configurato nel file .env o global'
+        error: 'MYZUBSTER_API_TOKEN non configurato'
       });
     }
 
-    console.log('🔗 Chiamata al core gateway:', MYZUBSTER_API_URL);
-    console.log('🔑 Token usato:', MYZUBSTER_API_TOKEN.substring(0, 20) + '...');
-
+    // Chiamata al core gateway
     const paymentResponse = await axios.post(
       `${MYZUBSTER_API_URL}/orders`,
       {
@@ -71,6 +62,7 @@ router.post('/', auth, async (req, res) => {
 
     const paymentData = paymentResponse.data;
 
+    // Salva nel database del marketplace
     const order = await Order.create({
       buyerId: req.user.id,
       skillId: skill.id,
@@ -105,20 +97,16 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// ===== LISTA ORDINI UTENTE =====
+// ===== LISTA ORDINI UTENTE (semplificata, SENZA include) =====
 router.get('/my-orders', auth, async (req, res) => {
   try {
     const orders = await Order.findAll({
       where: { buyerId: req.user.id },
-      include: [
-        { model: Skill, attributes: ['id', 'name'] },
-        { model: User, as: 'buyer', attributes: ['id', 'name', 'email'] }
-      ],
       order: [['createdAt', 'DESC']]
     });
     res.json(orders);
   } catch (error) {
-    console.error('❌ Errore recupero ordini:', error);
+    console.error('❌ Errore recupero ordini:', error.message);
     res.status(500).json({ error: 'Errore recupero ordini' });
   }
 });
@@ -142,7 +130,7 @@ router.get('/:id/payment-status', auth, async (req, res) => {
       amountReceived: order.amountReceived
     });
   } catch (error) {
-    console.error('❌ Errore verifica stato:', error);
+    console.error('❌ Errore verifica stato:', error.message);
     res.status(500).json({ error: 'Errore recupero stato' });
   }
 });

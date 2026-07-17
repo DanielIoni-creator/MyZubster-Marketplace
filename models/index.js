@@ -1,7 +1,8 @@
+// models/index.js
 require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 
-// Connessione al database (usa SQLite in sviluppo, PostgreSQL in produzione)
+// ===== CONNESSIONE AL DATABASE =====
 const sequelize = new Sequelize(
   process.env.DATABASE_URL || 'sqlite:./database.sqlite',
   {
@@ -15,14 +16,14 @@ const sequelize = new Sequelize(
   }
 );
 
-// Importa i modelli (factory pattern)
+// ===== IMPORT DEI MODELLI =====
 const User = require('./User')(sequelize, DataTypes);
 const Order = require('./Order')(sequelize, DataTypes);
 const Skill = require('./Skill')(sequelize, DataTypes);
 
-// ========== RELAZIONI ==========
+// ===== RELAZIONI =====
 
-// Un utente può avere molti ordini (come acquirente)
+// ---- User ↔ Order ----
 User.hasMany(Order, {
   foreignKey: 'buyerId',
   as: 'orders'
@@ -32,7 +33,7 @@ Order.belongsTo(User, {
   as: 'buyer'
 });
 
-// Un utente può avere molte competenze (come venditore)
+// ---- User ↔ Skill ----
 User.hasMany(Skill, {
   foreignKey: 'sellerId',
   as: 'skills'
@@ -42,7 +43,17 @@ Skill.belongsTo(User, {
   as: 'seller'
 });
 
-// ========== ESPORTAZIONI ==========
+// ---- Order ↔ Skill ----
+Order.belongsTo(Skill, {
+  foreignKey: 'skillId',
+  as: 'skill'
+});
+Skill.hasMany(Order, {
+  foreignKey: 'skillId',
+  as: 'orders'
+});
+
+// ===== ESPORTAZIONI =====
 module.exports = {
   sequelize,
   Sequelize,

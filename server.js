@@ -1,19 +1,15 @@
 // =============================================
-// MYZUBSTER MARKETPLACE - SERVER
+// MYZUBSTER MARKETPLACE - SERVER (FULL)
 // =============================================
 require('dotenv').config();
 
-// ===== GESTIONE ERRORI NON CATTURATI =====
+// ===== GESTIONE ERRORI =====
 process.on('uncaughtException', (err) => {
   console.error('❌ UNCAUGHT EXCEPTION:', err.stack);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ UNHANDLED REJECTION:', reason);
-});
-
-process.on('exit', (code) => {
-  console.log(`⚠️ Processo terminato con codice: ${code}`);
 });
 
 // ===== VARIABILI GLOBALI =====
@@ -45,22 +41,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // ===== ROUTE =====
 console.log('🔍 Caricamento route...');
 
-// ---- /api/auth ATTIVA ----
+// ---- TUTTE LE ROUTE ATTIVE ----
 app.use('/api/auth', require('./routes/auth'));
-
-// ---- /api/users ATTIVA ----
 app.use('/api/users', require('./routes/users'));
-
-// ---- /api/skills ATTIVA ----
 app.use('/api/skills', require('./routes/skills'));
-
-// ---- /api/orders ATTIVA ----
 app.use('/api/orders', require('./routes/orders'));
-
-// ---- /api/admin COMMENTATA (da attivare dopo) ----
+app.use('/api/webhook', require('./routes/webhook'));
 // app.use('/api/admin', require('./routes/admin'));
 
-console.log('✅ Route caricate (auth + users + skills + orders attive)');
+console.log('✅ Tutte le route caricate');
 
 // ===== HEALTH CHECK =====
 app.get('/api/health', (req, res) => {
@@ -71,18 +60,6 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
-
-// ===== DEBUG ENDPOINT =====
-if (process.env.NODE_ENV === 'development') {
-  app.get('/api/debug/env', (req, res) => {
-    res.json({
-      MYZUBSTER_API_URL: process.env.MYZUBSTER_API_URL || 'NON CONFIGURATO',
-      MYZUBSTER_API_TOKEN: process.env.MYZUBSTER_API_TOKEN ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO',
-      NODE_ENV: process.env.NODE_ENV || 'NON CONFIGURATO',
-      PORT: process.env.PORT || '4000 (default)'
-    });
-  });
-}
 
 // ===== 404 HANDLER =====
 app.use((req, res) => {
@@ -102,23 +79,22 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ Connessione PostgreSQL stabilita');
+    console.log('✅ Connessione database stabilita');
 
-    // FORCE: true ricrea le tabelle da zero (utile in sviluppo)
-    // ATTENZIONE: cancella tutti i dati! Non usare in produzione.
-    await sequelize.sync({ force: true });
-    console.log('📦 Database sincronizzato (force: true) - tabelle ricreate');
+    await sequelize.sync({ alter: true });
+    console.log('📦 Database sincronizzato');
 
     app.listen(PORT, () => {
       console.log(`🚀 Marketplace avviato su http://localhost:${PORT}`);
       console.log(`📦 Modalità: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 MyZubster API: ${process.env.MYZUBSTER_API_URL || 'NON CONFIGURATO'}`);
       console.log(`🔑 MyZubster Token: ${process.env.MYZUBSTER_API_TOKEN ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
+      console.log(`🔐 Webhook Secret: ${process.env.WEBHOOK_SECRET ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
       console.log('✅ Server in ascolto, in attesa di richieste...');
     });
   } catch (error) {
     console.error('❌ Errore avvio server:', error);
-    setTimeout(() => process.exit(1), 2000);
+    process.exit(1);
   }
 };
 

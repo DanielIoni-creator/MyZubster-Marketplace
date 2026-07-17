@@ -10,20 +10,16 @@ router.post('/', auth, async (req, res) => {
   try {
     const { title, description, category, price, currency = 'USD' } = req.body;
 
-    console.log('📝 Creazione skill:', { title, description, category, price, currency });
-
     if (!title || !description || !category || !price) {
       return res.status(400).json({ error: 'Campi obbligatori mancanti' });
     }
 
-    // Verifica che l'utente sia un seller
     if (req.user.role !== 'seller' && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Solo i seller possono pubblicare competenze' });
     }
 
-    // Crea la competenza (usa "name" come richiesto dal modello)
     const skill = await Skill.create({
-      name: title,          // Mappa "title" a "name"
+      name: title,
       description,
       category,
       price,
@@ -32,16 +28,9 @@ router.post('/', auth, async (req, res) => {
       isActive: true
     });
 
-    console.log('✅ Skill creata:', skill.id);
-
     res.status(201).json(skill);
-
   } catch (error) {
-    console.error('❌ ERRORE CREAZIONE COMPETENZA:', error.message);
-    console.error('❌ STACK:', error.stack);
-    if (error.errors) {
-      console.error('❌ DETTAGLI:', error.errors.map(e => e.message));
-    }
+    console.error('❌ Errore creazione competenza:', error.message);
     res.status(500).json({ error: 'Errore creazione competenza' });
   }
 });
@@ -56,7 +45,7 @@ router.get('/', async (req, res) => {
     });
     res.json(skills);
   } catch (error) {
-    console.error('❌ ERRORE RECUPERO COMPETENZE:', error.message);
+    console.error('❌ Errore recupero competenze:', error.message);
     res.status(500).json({ error: 'Errore recupero competenze' });
   }
 });
@@ -72,7 +61,7 @@ router.get('/:id', async (req, res) => {
     }
     res.json(skill);
   } catch (error) {
-    console.error('❌ ERRORE RECUPERO COMPETENZA:', error.message);
+    console.error('❌ Errore recupero competenza:', error.message);
     res.status(500).json({ error: 'Errore recupero competenza' });
   }
 });
