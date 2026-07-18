@@ -17,7 +17,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     skillId: {
       type: DataTypes.INTEGER,
-      allowNull: true
+      allowNull: true,
+      references: {
+        model: 'Skills',
+        key: 'id'
+      }
     },
     amount: {
       type: DataTypes.FLOAT,
@@ -33,6 +37,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     moneroAmount: {
       type: DataTypes.FLOAT,
+      allowNull: true
+    },
+    txHash: {
+      type: DataTypes.STRING,
       allowNull: true
     },
     addressIndex: {

@@ -1,5 +1,5 @@
 // =============================================
-// MYZUBSTER MARKETPLACE - SERVER (FULL)
+// MYZUBSTER MARKETPLACE - SERVER
 // =============================================
 require('dotenv').config();
 
@@ -41,7 +41,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // ===== ROUTE =====
 console.log('🔍 Caricamento route...');
 
-// ---- TUTTE LE ROUTE ATTIVE ----
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/skills', require('./routes/skills'));
@@ -84,18 +83,28 @@ const startServer = async () => {
     await sequelize.sync({ alter: true });
     console.log('📦 Database sincronizzato');
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Marketplace avviato su http://localhost:${PORT}`);
-      console.log(`📦 Modalità: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 MyZubster API: ${process.env.MYZUBSTER_API_URL || 'NON CONFIGURATO'}`);
-      console.log(`🔑 MyZubster Token: ${process.env.MYZUBSTER_API_TOKEN ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
-      console.log(`🔐 Webhook Secret: ${process.env.WEBHOOK_SECRET ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
-      console.log('✅ Server in ascolto, in attesa di richieste...');
-    });
+    // Avvia il server solo se NON siamo in modalità test
+    if (process.env.NODE_ENV !== 'test') {
+      app.listen(PORT, () => {
+        console.log(`🚀 Marketplace avviato su http://localhost:${PORT}`);
+        console.log(`📦 Modalità: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`🔗 MyZubster API: ${process.env.MYZUBSTER_API_URL || 'NON CONFIGURATO'}`);
+        console.log(`🔑 MyZubster Token: ${process.env.MYZUBSTER_API_TOKEN ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
+        console.log(`🔐 Webhook Secret: ${process.env.WEBHOOK_SECRET ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
+        console.log('✅ Server in ascolto, in attesa di richieste...');
+      });
+    } else {
+      console.log('🧪 Modalità test – server non avviato');
+    }
   } catch (error) {
     console.error('❌ Errore avvio server:', error);
     process.exit(1);
   }
 };
 
-startServer();
+// Avvia il server solo se NON siamo in modalità test
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
+
+module.exports = app;
