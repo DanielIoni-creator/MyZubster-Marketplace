@@ -46,7 +46,8 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/skills', require('./routes/skills'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/webhook', require('./routes/webhook'));
-app.use('/api/pgp', require('./routes/pgp'));   // 👈 PGP per firma/cifratura
+app.use('/api/pgp', require('./routes/pgp'));
+app.use('/api/nft', require('./routes/nft'));   // 👈 NFT INTEGRATION
 // app.use('/api/admin', require('./routes/admin'));
 
 console.log('✅ Tutte le route caricate');
@@ -93,6 +94,7 @@ const startServer = async () => {
         console.log(`🔑 MyZubster Token: ${process.env.MYZUBSTER_API_TOKEN ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
         console.log(`🔐 Webhook Secret: ${process.env.WEBHOOK_SECRET ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
         console.log(`🔐 PGP Key ID: ${process.env.PGP_KEY_ID ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
+        console.log(`🎨 NFT Contract: ${process.env.NFT_CONTRACT_ADDRESS ? '✅ CONFIGURATO' : '❌ NON CONFIGURATO'}`);
         console.log('✅ Server in ascolto, in attesa di richieste...');
       });
     } else {
