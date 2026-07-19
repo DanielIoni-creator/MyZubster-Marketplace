@@ -563,3 +563,12 @@ git commit -m "docs: aggiunte traduzioni IT, ES, FR per il README del marketplac
 git push origin main
 
 Ora il README del marketplace è completo in tutte e 4 le lingue. 🚀
+Follow the development of MyZubster and connect with me on social media:
+
+- 📖 **Blog & Articles**: [DEV.to - Daniel Ioni](https://dev.to/danielioni)
+- 🐦 **X (Twitter)**: [@myzubster](https://x.com/myzubster)
+- 💼 **LinkedIn**: [Daniel Ioni](https://www.linkedin.com/in/daniel-ioni-62b2b9423/)
+- 🐙 **GitHub**: [DanielIoni-creator](https://github.com/DanielIoni-creator)
+
+**Stay updated on the journey!** 🚀
+
