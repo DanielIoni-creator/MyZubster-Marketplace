@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize) => {
   const Order = sequelize.define('Order', {
     id: {
       type: DataTypes.INTEGER,
@@ -15,9 +15,17 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
+    sellerId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
+    },
     skillId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       references: {
         model: 'Skills',
         key: 'id'
@@ -48,7 +56,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     status: {
-      type: DataTypes.STRING,
+      type: DataTypes.ENUM('pending', 'paid', 'in_progress', 'completed', 'cancelled', 'disputed'),
       defaultValue: 'pending'
     },
     network: {
@@ -62,11 +70,25 @@ module.exports = (sequelize, DataTypes) => {
     amountReceived: {
       type: DataTypes.FLOAT,
       defaultValue: 0
+    },
+    paidAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    completedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     timestamps: true,
     tableName: 'Orders'
   });
+
+  Order.associate = (models) => {
+    Order.belongsTo(models.User, { as: 'buyer', foreignKey: 'buyerId' });
+    Order.belongsTo(models.User, { as: 'seller', foreignKey: 'sellerId' });
+    Order.belongsTo(models.Skill, { foreignKey: 'skillId' });
+  };
 
   return Order;
 };

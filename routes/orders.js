@@ -1,26 +1,14 @@
 // routes/orders.js
 const express = require('express');
-const axios = require('axios');
 const { Order, Skill, User } = require('../models');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// ===== CONFIGURAZIONE =====
-const MYZUBSTER_API_URL =
-  global.MYZUBSTER_API_URL ||
-  process.env.MYZUBSTER_API_URL ||
-  'http://localhost:3000/api';
-
-const MYZUBSTER_API_TOKEN =
-  global.MYZUBSTER_API_TOKEN ||
-  process.env.MYZUBSTER_API_TOKEN ||
-  null;
-
 // ===== CREA ORDINE =====
 router.post('/', auth, async (req, res) => {
   try {
-    const { skillId, amount, currency, customerEmail } = req.body;
+    const { skillId } = req.body;
 
     if (!skillId) {
       return res.status(400).json({ error: 'SkillId obbligatorio' });
@@ -35,49 +23,29 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'Non puoi acquistare la tua stessa competenza' });
     }
 
-    const orderAmount = amount || skill.price;
-    const orderCurrency = currency || skill.currency || 'USD';
+    const orderAmount = skill.price;
+    const orderCurrency = skill.currency || 'USD';
 
-    if (!MYZUBSTER_API_TOKEN) {
-      return res.status(500).json({
-        error: 'MYZUBSTER_API_TOKEN non configurato'
-      });
-    }
+    // Mock: genera un indirizzo Monero fittizio
+    const mockAddress = '8A1B2C3D4E5F6G7H8I9J0K' + Math.random().toString(36).substring(2, 8);
 
-    // Chiamata al core gateway
-    const paymentResponse = await axios.post(
-      `${MYZUBSTER_API_URL}/orders`,
-      {
-        amount: orderAmount,
-        currency: orderCurrency,
-        customerEmail: customerEmail || req.user.email
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${MYZUBSTER_API_TOKEN}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    const paymentData = paymentResponse.data;
-
-    // Salva nel database del marketplace
     const order = await Order.create({
       buyerId: req.user.id,
+      sellerId: skill.sellerId,
       skillId: skill.id,
       amount: orderAmount,
       currency: orderCurrency,
-      moneroAddress: paymentData.moneroAddress,
-      moneroAmount: paymentData.moneroAmount,
-      addressIndex: paymentData.addressIndex,
+      moneroAddress: mockAddress,
+      moneroAmount: orderAmount / 150,
+      addressIndex: Math.floor(Math.random() * 1000),
       status: 'pending',
-      network: paymentData.network || 'testnet'
+      network: 'testnet'
     });
 
     res.status(201).json({
       id: order.id,
       buyerId: order.buyerId,
+      sellerId: order.sellerId,
       skillId: order.skillId,
       amount: order.amount,
       currency: order.currency,
@@ -89,15 +57,75 @@ router.post('/', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Errore creazione ordine:', error.response?.data || error.message);
+    console.error('❌ Errore creazione ordine:', error);
     res.status(500).json({
-      error: 'Errore creazione pagamento',
-      details: error.response?.data?.error || error.message
+      error: 'Errore creazione ordine',
+      details: error.message
     });
   }
 });
 
-// ===== LISTA ORDINI UTENTE (semplificata, SENZA include) =====
+// ===== DETTAGLIO ORDINE (senza include) =====
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const order = await Order.findByPk(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: 'Ordine non trovato' });
+    }
+
+    if (order.buyerId !== req.user.id && order.sellerId !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accesso negato' });
+    }
+
+    // Recupera i dettagli associati con query separate
+    const buyer = await User.findByPk(order.buyerId, { attributes: ['id', 'username', 'name'] });
+    const seller = await User.findByPk(order.sellerId, { attributes: ['id', 'username', 'name'] });
+    const skill = await Skill.findByPk(order.skillId);
+
+    res.json({
+      ...order.toJSON(),
+      buyer,
+      seller,
+      skill
+    });
+  } catch (error) {
+    console.error('❌ Errore recupero ordine:', error);
+    res.status(500).json({ error: 'Errore recupero ordine' });
+  }
+});
+
+// ===== AGGIORNA STATO ORDINE =====
+router.patch('/:id/status', auth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['pending', 'paid', 'in_progress', 'completed', 'cancelled', 'disputed'];
+
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Stato non valido' });
+    }
+
+    const order = await Order.findByPk(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: 'Ordine non trovato' });
+    }
+
+    if (order.sellerId !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accesso negato' });
+    }
+
+    order.status = status;
+    if (status === 'paid') order.paidAt = new Date();
+    if (status === 'completed') order.completedAt = new Date();
+    await order.save();
+
+    res.json(order);
+  } catch (error) {
+    console.error('❌ Errore aggiornamento stato:', error);
+    res.status(500).json({ error: 'Errore aggiornamento stato' });
+  }
+});
+
+// ===== LISTA ORDINI UTENTE =====
 router.get('/my-orders', auth, async (req, res) => {
   try {
     const orders = await Order.findAll({
@@ -108,30 +136,6 @@ router.get('/my-orders', auth, async (req, res) => {
   } catch (error) {
     console.error('❌ Errore recupero ordini:', error.message);
     res.status(500).json({ error: 'Errore recupero ordini' });
-  }
-});
-
-// ===== VERIFICA STATO PAGAMENTO =====
-router.get('/:id/payment-status', auth, async (req, res) => {
-  try {
-    const order = await Order.findByPk(req.params.id);
-    if (!order) {
-      return res.status(404).json({ error: 'Ordine non trovato' });
-    }
-
-    if (order.buyerId !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Accesso negato' });
-    }
-
-    res.json({
-      id: order.id,
-      status: order.status,
-      confirmations: order.confirmations,
-      amountReceived: order.amountReceived
-    });
-  } catch (error) {
-    console.error('❌ Errore verifica stato:', error.message);
-    res.status(500).json({ error: 'Errore recupero stato' });
   }
 });
 

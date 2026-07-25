@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize) => {
   const User = sequelize.define('User', {
     id: {
       type: DataTypes.INTEGER,
@@ -19,6 +19,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
+    username: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false
@@ -30,6 +35,22 @@ module.exports = (sequelize, DataTypes) => {
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    moneroAddress: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    pgpPublicKey: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    location: {
+      type: DataTypes.JSON,
+      allowNull: true
+    },
+    rating: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0
     }
   }, {
     timestamps: true,

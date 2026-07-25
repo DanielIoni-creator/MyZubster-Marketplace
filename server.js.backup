@@ -1,0 +1,199 @@
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const { Sequelize, DataTypes } = require('sequelize');
+const path = require('path');
+
+// Carica variabili d'ambiente
+dotenv.config();
+
+// ============================================
+// CONFIGURAZIONE
+// ============================================
+
+const PORT = process.env.PORT || 4000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+console.log(`📦 NODE_ENV: ${NODE_ENV}`);
+console.log(`🚪 PORT: ${PORT}`);
+
+// ============================================
+// DATABASE (SQLite)
+// ============================================
+
+const DB_DIALECT = process.env.DB_DIALECT || 'sqlite';
+const DB_STORAGE = process.env.DB_STORAGE || './data/marketplace.sqlite';
+
+// Configurazione Sequelize
+const sequelize = new Sequelize({
+  dialect: DB_DIALECT,
+  storage: DB_STORAGE,
+  logging: NODE_ENV === 'development' ? console.log : false,
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  }
+});
+
+// ============================================
+// MODELLI
+// ============================================
+
+// Definizione del modello User
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+    allowNull: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true
+    }
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  role: {
+    type: DataTypes.ENUM('user', 'admin', 'seller'),
+    defaultValue: 'user'
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  moneroAddress: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  pgpPublicKey: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  location: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  rating: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  }
+}, {
+  timestamps: true,
+  tableName: 'Users'
+});
+
+// ============================================
+// DEFINIZIONE ROUTE
+// ============================================
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+console.log('🔍 Caricamento route...');
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'MyZubster-Marketplace',
+    version: '1.0.0',
+    database: DB_DIALECT
+  });
+});
+
+// Route users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] }
+    });
+    res.json({ users });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/users', async (req, res) => {
+  try {
+    const { email, username, password, name } = req.body;
+    const user = await User.create({ email, username, password, name });
+    res.status(201).json({ user: { id: user.id, email: user.email, username: user.username } });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Route per il gateway (esempio)
+app.get('/api/gateway/status', async (req, res) => {
+  try {
+    const response = await fetch(process.env.GATEWAY_API_URL + '/health');
+    const data = await response.json();
+    res.json({ gateway: data, status: 'connected' });
+  } catch (error) {
+    res.status(503).json({ gateway: 'unreachable', error: error.message });
+  }
+});
+
+console.log('✅ Tutte le route caricate');
+
+// ============================================
+// AVVIO SERVER
+// ============================================
+
+async function startServer() {
+  try {
+    // Sincronizza il database (force: true per reset in produzione)
+    // In produzione, usa { force: false } per non perdere dati
+    const syncOptions = NODE_ENV === 'production' ? { force: false } : { force: true };
+    
+    await sequelize.sync(syncOptions);
+    console.log('✅ Connessione database stabilita');
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server avviato sulla porta ${PORT}`);
+      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`👥 Users: http://localhost:${PORT}/api/users`);
+    });
+
+  } catch (error) {
+    console.error('❌ Errore avvio server:', error);
+    process.exit(1);
+  }
+}
+
+// Gestione errori non catturati
+process.on('uncaughtException', (err) => {
+  console.error('❌ UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ UNHANDLED REJECTION:', reason);
+});
+
+// Avvia il server
+startServer();
+
+module.exports = { app, sequelize, User };
