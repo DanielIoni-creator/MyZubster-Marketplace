@@ -1,3 +1,5 @@
+> **Part of the [MyZubster ecosystem](https://github.com/MyZubster-Ecosystem/myzubster)**
+
 # 🛒 MyZubster – Skills Marketplace Backend
 
 **MyZubster-Marketplace** is the RESTful API backend for the skills marketplace. It handles users, skills, orders, commissions, and webhook integration with the Monero payment gateway.
