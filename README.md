@@ -1,9 +1,9 @@
 > **Part of the [MyZubster ecosystem](https://github.com/MyZubster-Ecosystem/myzubster)**
-[![License](https://img.shields.io/github/license/DanielIoni-creator/MyZubster-Marketplace](LICENSE)) 
-[![CI](https://github.com/DanielIoni-creator/MyZubster-Marketplace/actions/workflows/ci.yml/badge.svg)](https://github.com/DanielIoni-creator/MyZubster-Marketplace/actions/workflows/ci.yml)
-[![GitHub stars](https://img.shields.io/github/stars/DanielIoni-creator/MyZubster-Marketplace](https://github.com/DanielIoni-creator/MyZubster-Marketplace/stargazers)) 
-[![GitHub issues](https://img.shields.io/github/issues/DanielIoni-creator/MyZubster-Marketplace](https://github.com/DanielIoni-creator/MyZubster-Marketplace/issues)) 
-[![GitHub last commit](https://img.shields.io/github/last-commit/DanielIoni-creator/MyZubster-Marketplace](https://github.com/DanielIoni-creator/MyZubster-Marketplace/commits/main)) 
+[![License](https://img.shields.io/github/license/MyZubster-Ecosystem/MyZubster-Marketplace](LICENSE)) 
+[![CI](https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace/actions/workflows/ci.yml/badge.svg)](https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace/actions/workflows/ci.yml)
+[![GitHub stars](https://img.shields.io/github/stars/MyZubster-Ecosystem/MyZubster-Marketplace](https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace/stargazers)) 
+[![GitHub issues](https://img.shields.io/github/issues/MyZubster-Ecosystem/MyZubster-Marketplace](https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace/issues)) 
+[![GitHub last commit](https://img.shields.io/github/last-commit/MyZubster-Ecosystem/MyZubster-Marketplace](https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace/commits/main)) 
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green)](https://nodejs.org/)
 
 # 🛒 MyZubster – Skills Marketplace Backend
@@ -70,7 +70,7 @@ Commission applied → seller receives payout
 
 ```bash
 # Clone
-git clone https://github.com/DanielIoni-creator/MyZubster-Marketplace.git
+git clone https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace.git
 cd MyZubster-Marketplace
 
 # Install & configure
@@ -122,11 +122,11 @@ Follow the development of MyZubster and connect with me on social media:
 - 📖 **Blog & Articles**: [DEV.to - Daniel Ioni](https://dev.to/danielioni)
 - 🐦 **X (Twitter)**: [@myzubster](https://x.com/myzubster)
 - 💼 **LinkedIn**: [Daniel Ioni](https://www.linkedin.com/in/daniel-ioni-62b2b9423/)
-- 🐙 **GitHub**: [DanielIoni-creator](https://github.com/DanielIoni-creator)
+- 🐙 **GitHub**: [MyZubster-Ecosystem](https://github.com/MyZubster-Ecosystem)
 - 🎵 **TikTok**: [@h4x0r_23](https://www.tiktok.com/@h4x0r_23)
 **Stay updated on the journey!** 🚀
 
 
 ## 🤝 Contributi
 
-Contributi sono benvenuti! Dai un'occhiata alle [issue aperte]([Issues](https://github.com/DanielIoni-creator/MyZubster-Marketplace/issues)) e alla [roadmap]([Roadmap](https://github.com/users/DanielIoni-creator/projects/1)).
+Contributi sono benvenuti! Dai un'occhiata alle [issue aperte]([Issues](https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace/issues)) e alla [roadmap]([Roadmap](https://github.com/users/MyZubster-Ecosystem/projects/1)).
