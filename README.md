@@ -1,3 +1,5 @@
+> **Part of the [MyZubster ecosystem](https://github.com/MyZubster-Ecosystem)**
+
 > **Part of the [MyZubster ecosystem](https://github.com/MyZubster-Ecosystem/myzubster)**
 [![License](https://img.shields.io/github/license/MyZubster-Ecosystem/MyZubster-Marketplace](LICENSE)) 
 [![CI](https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace/actions/workflows/ci.yml/badge.svg)](https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace/actions/workflows/ci.yml)
@@ -130,3 +132,7 @@ Follow the development of MyZubster and connect with me on social media:
 ## 🤝 Contributi
 
 Contributi sono benvenuti! Dai un'occhiata alle [issue aperte]([Issues](https://github.com/MyZubster-Ecosystem/MyZubster-Marketplace/issues)) e alla [roadmap]([Roadmap](https://github.com/users/MyZubster-Ecosystem/projects/1)).
+
+## 🌐 Ecosystem Hub
+
+**MyZubster Ecosystem**: https://github.com/MyZubster-Ecosystem
