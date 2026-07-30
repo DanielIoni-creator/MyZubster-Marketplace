@@ -1,48 +1,35 @@
 const request = require('supertest');
 const app = require('../server');
 
-let authToken;
+let token;
 
 beforeAll(async () => {
-  await request(app)
+  // Registra un utente e ottieni il token
+  const res = await request(app)
     .post('/api/users/register')
     .send({
       email: 'seller@test.com',
       password: 'test123',
       name: 'Seller User'
     });
-
-  const res = await request(app)
-    .post('/api/users/login')
-    .send({
-      email: 'seller@test.com',
-      password: 'test123'
-    });
-  authToken = res.body.token;
-
-  await request(app)
-    .post('/api/users/become-seller')
-    .set('Authorization', `Bearer ${authToken}`)
-    .send({
-      moneroAddress: '8B1vWxYz123ABC...'
-    });
+  token = res.body.token;
+  if (!token) throw new Error('Token non generato!');
 });
 
 describe('Skills API', () => {
   test('POST /api/skills - crea una competenza (seller)', async () => {
     const res = await request(app)
       .post('/api/skills')
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Authorization', `Bearer ${token}`)
       .send({
         title: 'Sviluppo Monero',
-        description: 'Integrazione pagamenti Monero',
-        category: 'Blockchain',
-        price: 100,
-        currency: 'USD'
+        description: 'Esperto in Monero',
+        price: 0.5,
+        category: 'Blockchain'
       });
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty('id');
-    expect(res.body).toHaveProperty('name', 'Sviluppo Monero');
+    expect(res.body).toHaveProperty('title', 'Sviluppo Monero');
   });
 
   test('GET /api/skills - lista competenze', async () => {

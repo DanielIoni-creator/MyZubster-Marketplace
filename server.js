@@ -55,10 +55,10 @@ const WebhookLog = sequelize.define('WebhookLog', {
 });
 
 // Relazioni
-Skill.belongsTo(User, { foreignKey: 'seller_id' });
-Order.belongsTo(User, { foreignKey: 'buyer_id' });
-Order.belongsTo(User, { foreignKey: 'seller_id' });
-Order.belongsTo(Skill, { foreignKey: 'skill_id' });
+Skill.belongsTo(User, { foreignKey: 'seller_id', as: 'seller' });
+Order.belongsTo(User, { foreignKey: 'buyer_id', as: 'buyer' });
+Order.belongsTo(User, { foreignKey: 'seller_id', as: 'seller' });
+Order.belongsTo(Skill, { foreignKey: 'skill_id', as: 'skill' });
 
 // Middleware per iniettare i modelli nelle route
 app.use((req, res, next) => {
@@ -66,7 +66,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Import routes (ora usano req.models)
+// Import routes
 const authRoutes = require('./routes/auth');
 const skillRoutes = require('./routes/skills');
 const orderRoutes = require('./routes/orders');
@@ -96,8 +96,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Esporta per i test
-module.exports = { app, sequelize, models: { User, Skill, Order, WebhookLog } };
+// Esporta app e sequelize
+module.exports = app;
+module.exports.sequelize = sequelize;
+module.exports.models = { User, Skill, Order, WebhookLog };
 
 // Avvia il server SOLO se eseguito direttamente
 if (require.main === module) {

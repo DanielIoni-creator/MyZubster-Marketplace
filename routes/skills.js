@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
 
-// GET /api/skills - Lista tutte le competenze
+// GET (pubblico)
 router.get('/', async (req, res) => {
   try {
     const { Skill, User } = req.models;
     const skills = await Skill.findAll({
-      include: [{ model: User, as: 'seller', attributes: ['id', 'email', 'name'] }]
+      include: [{ model: User, as: 'seller', attributes: ['id', 'email'] }]
     });
     res.json(skills);
   } catch (error) {
@@ -15,16 +16,14 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/skills/:id - Dettaglio competenza
+// GET /:id (pubblico)
 router.get('/:id', async (req, res) => {
   try {
     const { Skill, User } = req.models;
     const skill = await Skill.findByPk(req.params.id, {
-      include: [{ model: User, as: 'seller', attributes: ['id', 'email', 'name'] }]
+      include: [{ model: User, as: 'seller', attributes: ['id', 'email'] }]
     });
-    if (!skill) {
-      return res.status(404).json({ error: 'Competenza non trovata' });
-    }
+    if (!skill) return res.status(404).json({ error: 'Competenza non trovata' });
     res.json(skill);
   } catch (error) {
     console.error('❌ Errore dettaglio competenza:', error.message);
@@ -32,28 +31,13 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/skills - Crea una nuova competenza (richiede autenticazione)
-router.post('/', async (req, res) => {
+// POST (protetto)
+router.post('/', auth, async (req, res) => {
   try {
-    // Verifica che l'utente sia autenticato (JWT)
-    // In una implementazione reale, qui dovresti verificare il token
-    // e impostare req.userId
     const { Skill } = req.models;
     const { title, description, price, category } = req.body;
-    
-    // Per semplicità, assumiamo che l'ID del seller venga dal token
-    // In una versione reale, dovresti estrarre l'ID dal JWT
-    const sellerId = req.userId || 1; // temporaneo, solo per test
-
-    const newSkill = await Skill.create({
-      seller_id: sellerId,
-      title,
-      description,
-      price,
-      category,
-      status: 'active'
-    });
-
+    const seller_id = req.user.id;
+    const newSkill = await Skill.create({ seller_id, title, description, price, category, status: 'active' });
     res.status(201).json(newSkill);
   } catch (error) {
     console.error('❌ Errore creazione competenza:', error.message);
@@ -61,15 +45,13 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/skills/:id - Aggiorna una competenza
-router.put('/:id', async (req, res) => {
+// PUT (protetto, proprietario)
+router.put('/:id', auth, async (req, res) => {
   try {
     const { Skill } = req.models;
     const skill = await Skill.findByPk(req.params.id);
-    if (!skill) {
-      return res.status(404).json({ error: 'Competenza non trovata' });
-    }
-
+    if (!skill) return res.status(404).json({ error: 'Competenza non trovata' });
+    if (skill.seller_id !== req.user.id) return res.status(403).json({ error: 'Non autorizzato' });
     const { title, description, price, category, status } = req.body;
     await skill.update({ title, description, price, category, status });
     res.json(skill);
@@ -79,15 +61,13 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/skills/:id - Elimina una competenza
-router.delete('/:id', async (req, res) => {
+// DELETE (protetto, proprietario)
+router.delete('/:id', auth, async (req, res) => {
   try {
     const { Skill } = req.models;
     const skill = await Skill.findByPk(req.params.id);
-    if (!skill) {
-      return res.status(404).json({ error: 'Competenza non trovata' });
-    }
-
+    if (!skill) return res.status(404).json({ error: 'Competenza non trovata' });
+    if (skill.seller_id !== req.user.id) return res.status(403).json({ error: 'Non autorizzato' });
     await skill.destroy();
     res.json({ message: 'Competenza eliminata' });
   } catch (error) {
