@@ -72,6 +72,41 @@ Commission applied → seller receives payout
 
 ---
 
+### Pagination
+
+`GET /api/skills` supports offset-based pagination.
+
+Query parameters:
+
+| Parameter | Default | Maximum | Description |
+| --- | ---: | ---: | --- |
+| `limit` | `20` | `100` | Number of skills to return |
+| `offset` | `0` | — | Number of skills to skip |
+
+Example:
+
+```http
+GET /api/skills?limit=10&offset=20
+Example response:
+
+{
+  "data": [
+    {
+      "id": 21,
+      "title": "Example skill"
+    }
+  ],
+  "pagination": {
+    "total": 53,
+    "limit": 10,
+    "offset": 20,
+    "pages": 6
+  }
+}
+
+Invalid pagination values, such as limit=0 or offset=-1, return an HTTP 400 response.
+
+
 ## 🚀 Quick Start
 
 ```bash

@@ -3,13 +3,55 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 
 // GET (pubblico)
+// GET /api/skills - 
 router.get('/', async (req, res) => {
   try {
     const { Skill, User } = req.models;
-    const skills = await Skill.findAll({
-      include: [{ model: User, as: 'seller', attributes: ['id', 'email'] }]
-    });
-    res.json(skills);
+
+    const DEFAULT_LIMIT = 20;
+    const MAX_LIMIT = 100;
+
+    const parsedLimit = Number.parseInt(req.query.limit, 10);
+    const parsedOffset = Number.parseInt(req.query.offset, 10);
+
+    if (
+      (req.query.limit !== undefined &&
+        (!Number.isInteger(parsedLimit) || parsedLimit < 1)) ||
+      (req.query.offset !== undefined &&
+        (!Number.isInteger(parsedOffset) || parsedOffset < 0))
+    ) {
+      return res.status(400).json({
+        error:
+          'Parametri di paginazione non validi: limit deve essere maggiore di 0 e offset non può essere negativo'
+      });
+    }
+
+    const limit = Math.min(parsedLimit || DEFAULT_LIMIT, MAX_LIMIT);
+    const offset = parsedOffset || 0;
+
+  const { count, rows } = await Skill.findAndCountAll({
+  limit,
+  offset,
+  distinct: true,
+  order: [['id', 'ASC']],
+  include: [
+    {
+      model: User,
+      as: 'seller',
+      attributes: ['id', 'email']
+    }
+  ]
+});
+
+res.json({
+  data: rows,
+  pagination: {
+    total: count,
+    limit,
+    offset,
+    pages: Math.ceil(count / limit)
+  }
+});
   } catch (error) {
     console.error('❌ Errore recupero competenze:', error.message);
     res.status(500).json({ error: 'Errore recupero competenze' });
