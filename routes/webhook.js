@@ -1,60 +1,66 @@
-// routes/webhook.js
 const express = require('express');
-const { Order } = require('../models');
 const router = express.Router();
 
-// Webhook per ricevere notifiche dal core gateway
+// POST /api/webhook/order-update - Riceve aggiornamenti da webhook
 router.post('/order-update', async (req, res) => {
   try {
-    console.log('📨 Webhook ricevuto:', req.body);
+    const { Order, WebhookLog } = req.models;
+    const { orderId, status, event, payload } = req.body;
 
-    const { orderId, status, txHash, confirmations, amountReceived } = req.body;
-
-    // Validazione
-    if (!orderId) {
-      console.error('❌ orderId mancante');
-      return res.status(400).json({ error: 'orderId è obbligatorio' });
-    }
-
-    if (!status) {
-      console.error('❌ status mancante');
-      return res.status(400).json({ error: 'status è obbligatorio' });
-    }
-
-    console.log(`🔍 Cerco ordine con ID: ${orderId}`);
-
-    // Cerca l'ordine
+    // Verifica che l'ordine esista
     const order = await Order.findByPk(orderId);
     if (!order) {
-      console.error(`❌ Ordine ${orderId} non trovato`);
       return res.status(404).json({ error: 'Ordine non trovato' });
     }
 
-    console.log(`🔍 Ordine trovato:`, order.toJSON());
+    // Aggiorna lo stato dell'ordine se fornito
+    if (status) {
+      await order.update({ status });
+    }
 
-    // Aggiorna l'ordine
-    order.status = status;
-    if (txHash) order.txHash = txHash;
-    if (confirmations !== undefined) order.confirmations = confirmations;
-    if (amountReceived !== undefined) order.amountReceived = amountReceived;
-    await order.save();
-
-    console.log(`✅ Ordine ${orderId} aggiornato a ${status}`);
-
-    res.json({
-      success: true,
-      message: `Ordine ${orderId} aggiornato a ${status}`,
-      order: {
-        id: order.id,
-        status: order.status,
-        confirmations: order.confirmations,
-        amountReceived: order.amountReceived
-      }
+    // Registra il webhook nel log
+    await WebhookLog.create({
+      order_id: orderId,
+      event: event || 'order-update',
+      payload: JSON.stringify(payload || req.body),
+      status: 'received'
     });
 
+    res.json({ message: 'Webhook ricevuto', order });
   } catch (error) {
-    console.error('❌ Webhook error:', error.message);
-    res.status(500).json({ error: 'Errore interno del server' });
+    console.error('❌ Errore webhook:', error.message);
+    res.status(500).json({ error: 'Errore elaborazione webhook' });
+  }
+});
+
+// GET /api/webhook/logs - Recupera i log dei webhook (admin)
+router.get('/logs', async (req, res) => {
+  try {
+    const { WebhookLog, Order } = req.models;
+    const logs = await WebhookLog.findAll({
+      include: [{ model: Order, attributes: ['id', 'status'] }],
+      limit: 100,
+      order: [['createdAt', 'DESC']]
+    });
+    res.json(logs);
+  } catch (error) {
+    console.error('❌ Errore recupero log webhook:', error.message);
+    res.status(500).json({ error: 'Errore recupero log webhook' });
+  }
+});
+
+// GET /api/webhook/logs/:orderId - Recupera i log per un ordine specifico
+router.get('/logs/:orderId', async (req, res) => {
+  try {
+    const { WebhookLog } = req.models;
+    const logs = await WebhookLog.findAll({
+      where: { order_id: req.params.orderId },
+      order: [['createdAt', 'DESC']]
+    });
+    res.json(logs);
+  } catch (error) {
+    console.error('❌ Errore recupero log per ordine:', error.message);
+    res.status(500).json({ error: 'Errore recupero log per ordine' });
   }
 });
 

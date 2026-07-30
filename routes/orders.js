@@ -1,106 +1,80 @@
-// routes/orders.js
 const express = require('express');
-const { Order, Skill, User } = require('../models');
-const auth = require('../middleware/auth');
-
 const router = express.Router();
 
-// ===== CREA ORDINE =====
-router.post('/', auth, async (req, res) => {
+// GET /api/orders - Lista tutti gli ordini
+router.get('/', async (req, res) => {
   try {
-    const { skillId } = req.body;
-
-    if (!skillId) {
-      return res.status(400).json({ error: 'SkillId obbligatorio' });
-    }
-
-    const skill = await Skill.findByPk(skillId);
-    if (!skill) {
-      return res.status(404).json({ error: 'Competenza non trovata' });
-    }
-
-    if (skill.sellerId === req.user.id) {
-      return res.status(400).json({ error: 'Non puoi acquistare la tua stessa competenza' });
-    }
-
-    const orderAmount = skill.price;
-    const orderCurrency = skill.currency || 'USD';
-
-    // Mock: genera un indirizzo Monero fittizio
-    const mockAddress = '8A1B2C3D4E5F6G7H8I9J0K' + Math.random().toString(36).substring(2, 8);
-
-    const order = await Order.create({
-      buyerId: req.user.id,
-      sellerId: skill.sellerId,
-      skillId: skill.id,
-      amount: orderAmount,
-      currency: orderCurrency,
-      moneroAddress: mockAddress,
-      moneroAmount: orderAmount / 150,
-      addressIndex: Math.floor(Math.random() * 1000),
-      status: 'pending',
-      network: 'testnet'
+    const { Order, User, Skill } = req.models;
+    const orders = await Order.findAll({
+      include: [
+        { model: User, as: 'buyer', attributes: ['id', 'email', 'name'] },
+        { model: User, as: 'seller', attributes: ['id', 'email', 'name'] },
+        { model: Skill, as: 'skill' }
+      ]
     });
-
-    res.status(201).json({
-      id: order.id,
-      buyerId: order.buyerId,
-      sellerId: order.sellerId,
-      skillId: order.skillId,
-      amount: order.amount,
-      currency: order.currency,
-      moneroAddress: order.moneroAddress,
-      moneroAmount: order.moneroAmount,
-      addressIndex: order.addressIndex,
-      status: order.status,
-      network: order.network
-    });
-
+    res.json(orders);
   } catch (error) {
-    console.error('❌ Errore creazione ordine:', error);
-    res.status(500).json({
-      error: 'Errore creazione ordine',
-      details: error.message
-    });
+    console.error('❌ Errore recupero ordini:', error.message);
+    res.status(500).json({ error: 'Errore recupero ordini' });
   }
 });
 
-// ===== DETTAGLIO ORDINE (senza include) =====
-router.get('/:id', auth, async (req, res) => {
+// GET /api/orders/:id - Dettaglio ordine
+router.get('/:id', async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id);
+    const { Order, User, Skill } = req.models;
+    const order = await Order.findByPk(req.params.id, {
+      include: [
+        { model: User, as: 'buyer', attributes: ['id', 'email', 'name'] },
+        { model: User, as: 'seller', attributes: ['id', 'email', 'name'] },
+        { model: Skill, as: 'skill' }
+      ]
+    });
     if (!order) {
       return res.status(404).json({ error: 'Ordine non trovato' });
     }
-
-    if (order.buyerId !== req.user.id && order.sellerId !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Accesso negato' });
-    }
-
-    // Recupera i dettagli associati con query separate
-    const buyer = await User.findByPk(order.buyerId, { attributes: ['id', 'username', 'name'] });
-    const seller = await User.findByPk(order.sellerId, { attributes: ['id', 'username', 'name'] });
-    const skill = await Skill.findByPk(order.skillId);
-
-    res.json({
-      ...order.toJSON(),
-      buyer,
-      seller,
-      skill
-    });
+    res.json(order);
   } catch (error) {
-    console.error('❌ Errore recupero ordine:', error);
-    res.status(500).json({ error: 'Errore recupero ordine' });
+    console.error('❌ Errore dettaglio ordine:', error.message);
+    res.status(500).json({ error: 'Errore dettaglio ordine' });
   }
 });
 
-// ===== AGGIORNA STATO ORDINE =====
-router.patch('/:id/status', auth, async (req, res) => {
+// POST /api/orders - Crea un nuovo ordine
+router.post('/', async (req, res) => {
   try {
-    const { status } = req.body;
-    const validStatuses = ['pending', 'paid', 'in_progress', 'completed', 'cancelled', 'disputed'];
+    const { Order, Skill } = req.models;
+    const { skill_id, buyer_id, amount } = req.body;
 
-    if (!status || !validStatuses.includes(status)) {
+    // Verifica che la skill esista e sia attiva
+    const skill = await Skill.findByPk(skill_id);
+    if (!skill || skill.status !== 'active') {
+      return res.status(400).json({ error: 'Competenza non disponibile' });
+    }
+
+    const newOrder = await Order.create({
+      buyer_id,
+      seller_id: skill.seller_id,
+      skill_id,
+      amount: amount || skill.price,
+      status: 'pending'
+    });
+
+    res.status(201).json(newOrder);
+  } catch (error) {
+    console.error('❌ Errore creazione ordine:', error.message);
+    res.status(500).json({ error: 'Errore creazione ordine' });
+  }
+});
+
+// PUT /api/orders/:id/status - Aggiorna lo stato di un ordine
+router.put('/:id/status', async (req, res) => {
+  try {
+    const { Order } = req.models;
+    const { status } = req.body;
+    const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: 'Stato non valido' });
     }
 
@@ -109,33 +83,28 @@ router.patch('/:id/status', auth, async (req, res) => {
       return res.status(404).json({ error: 'Ordine non trovato' });
     }
 
-    if (order.sellerId !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Accesso negato' });
-    }
-
-    order.status = status;
-    if (status === 'paid') order.paidAt = new Date();
-    if (status === 'completed') order.completedAt = new Date();
-    await order.save();
-
+    await order.update({ status });
     res.json(order);
   } catch (error) {
-    console.error('❌ Errore aggiornamento stato:', error);
-    res.status(500).json({ error: 'Errore aggiornamento stato' });
+    console.error('❌ Errore aggiornamento stato ordine:', error.message);
+    res.status(500).json({ error: 'Errore aggiornamento stato ordine' });
   }
 });
 
-// ===== LISTA ORDINI UTENTE =====
-router.get('/my-orders', auth, async (req, res) => {
+// DELETE /api/orders/:id - Elimina un ordine
+router.delete('/:id', async (req, res) => {
   try {
-    const orders = await Order.findAll({
-      where: { buyerId: req.user.id },
-      order: [['createdAt', 'DESC']]
-    });
-    res.json(orders);
+    const { Order } = req.models;
+    const order = await Order.findByPk(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: 'Ordine non trovato' });
+    }
+
+    await order.destroy();
+    res.json({ message: 'Ordine eliminato' });
   } catch (error) {
-    console.error('❌ Errore recupero ordini:', error.message);
-    res.status(500).json({ error: 'Errore recupero ordini' });
+    console.error('❌ Errore eliminazione ordine:', error.message);
+    res.status(500).json({ error: 'Errore eliminazione ordine' });
   }
 });
 

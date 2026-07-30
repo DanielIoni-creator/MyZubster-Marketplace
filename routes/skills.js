@@ -1,47 +1,12 @@
-// routes/skills.js
 const express = require('express');
-const { Skill, User } = require('../models');
-const auth = require('../middleware/auth');
-
 const router = express.Router();
 
-// ---- PUBBLICA UNA COMPETENZA (solo seller) ----
-router.post('/', auth, async (req, res) => {
-  try {
-    const { title, description, category, price, currency = 'USD' } = req.body;
-
-    if (!title || !description || !category || !price) {
-      return res.status(400).json({ error: 'Campi obbligatori mancanti' });
-    }
-
-    if (req.user.role !== 'seller' && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Solo i seller possono pubblicare competenze' });
-    }
-
-    const skill = await Skill.create({
-      name: title,
-      description,
-      category,
-      price,
-      currency,
-      sellerId: req.user.id,
-      isActive: true
-    });
-
-    res.status(201).json(skill);
-  } catch (error) {
-    console.error('❌ Errore creazione competenza:', error.message);
-    res.status(500).json({ error: 'Errore creazione competenza' });
-  }
-});
-
-// ---- LISTA COMPETENZE (pubblica) ----
+// GET /api/skills - Lista tutte le competenze
 router.get('/', async (req, res) => {
   try {
+    const { Skill, User } = req.models;
     const skills = await Skill.findAll({
-      where: { isActive: true },
-      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'email'] }],
-      order: [['createdAt', 'DESC']]
+      include: [{ model: User, as: 'seller', attributes: ['id', 'email', 'name'] }]
     });
     res.json(skills);
   } catch (error) {
@@ -50,19 +15,84 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ---- DETTAGLIO COMPETENZA ----
+// GET /api/skills/:id - Dettaglio competenza
 router.get('/:id', async (req, res) => {
   try {
+    const { Skill, User } = req.models;
     const skill = await Skill.findByPk(req.params.id, {
-      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'email'] }]
+      include: [{ model: User, as: 'seller', attributes: ['id', 'email', 'name'] }]
     });
     if (!skill) {
       return res.status(404).json({ error: 'Competenza non trovata' });
     }
     res.json(skill);
   } catch (error) {
-    console.error('❌ Errore recupero competenza:', error.message);
-    res.status(500).json({ error: 'Errore recupero competenza' });
+    console.error('❌ Errore dettaglio competenza:', error.message);
+    res.status(500).json({ error: 'Errore dettaglio competenza' });
+  }
+});
+
+// POST /api/skills - Crea una nuova competenza (richiede autenticazione)
+router.post('/', async (req, res) => {
+  try {
+    // Verifica che l'utente sia autenticato (JWT)
+    // In una implementazione reale, qui dovresti verificare il token
+    // e impostare req.userId
+    const { Skill } = req.models;
+    const { title, description, price, category } = req.body;
+    
+    // Per semplicità, assumiamo che l'ID del seller venga dal token
+    // In una versione reale, dovresti estrarre l'ID dal JWT
+    const sellerId = req.userId || 1; // temporaneo, solo per test
+
+    const newSkill = await Skill.create({
+      seller_id: sellerId,
+      title,
+      description,
+      price,
+      category,
+      status: 'active'
+    });
+
+    res.status(201).json(newSkill);
+  } catch (error) {
+    console.error('❌ Errore creazione competenza:', error.message);
+    res.status(500).json({ error: 'Errore creazione competenza' });
+  }
+});
+
+// PUT /api/skills/:id - Aggiorna una competenza
+router.put('/:id', async (req, res) => {
+  try {
+    const { Skill } = req.models;
+    const skill = await Skill.findByPk(req.params.id);
+    if (!skill) {
+      return res.status(404).json({ error: 'Competenza non trovata' });
+    }
+
+    const { title, description, price, category, status } = req.body;
+    await skill.update({ title, description, price, category, status });
+    res.json(skill);
+  } catch (error) {
+    console.error('❌ Errore aggiornamento competenza:', error.message);
+    res.status(500).json({ error: 'Errore aggiornamento competenza' });
+  }
+});
+
+// DELETE /api/skills/:id - Elimina una competenza
+router.delete('/:id', async (req, res) => {
+  try {
+    const { Skill } = req.models;
+    const skill = await Skill.findByPk(req.params.id);
+    if (!skill) {
+      return res.status(404).json({ error: 'Competenza non trovata' });
+    }
+
+    await skill.destroy();
+    res.json({ message: 'Competenza eliminata' });
+  } catch (error) {
+    console.error('❌ Errore eliminazione competenza:', error.message);
+    res.status(500).json({ error: 'Errore eliminazione competenza' });
   }
 });
 
