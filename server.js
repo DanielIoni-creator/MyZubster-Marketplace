@@ -77,6 +77,23 @@ async function initDatabase() {
             FOREIGN KEY (buyer_id) REFERENCES users(id),
             FOREIGN KEY (seller_id) REFERENCES users(id)
         );
+
+        CREATE TABLE IF NOT EXISTS escrow_orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER UNIQUE NOT NULL,
+            escrow_id TEXT,
+            status TEXT DEFAULT 'created',
+            funded_at DATETIME,
+            released_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (order_id) REFERENCES orders(id)
+        );
+    `);
+
+    await db.exec(`
+        ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'direct';
+        ALTER TABLE orders ADD COLUMN escrow_status TEXT;
+        ALTER TABLE orders ADD COLUMN escrow_id TEXT;
     `);
 
     console.log('✅ Connessione database stabilita');

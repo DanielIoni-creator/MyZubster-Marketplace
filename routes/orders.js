@@ -5,10 +5,36 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+const ESCROW_STATUS_MAP = {
+  pending: 'created',
+  paid: 'funded',
+  in_progress: 'in_progress',
+  completed: 'released',
+  cancelled: 'cancelled',
+  disputed: 'disputed'
+};
+
+const MARKETPLACE_STATUS_MAP = {
+  created: 'pending',
+  funded: 'paid',
+  in_progress: 'in_progress',
+  released: 'completed',
+  cancelled: 'cancelled',
+  disputed: 'disputed'
+};
+
+function mapToEscrowStatus(marketplaceStatus) {
+  return ESCROW_STATUS_MAP[marketplaceStatus] || marketplaceStatus;
+}
+
+function mapToMarketplaceStatus(escrowStatus) {
+  return MARKETPLACE_STATUS_MAP[escrowStatus] || escrowStatus;
+}
+
 // ===== CREA ORDINE =====
 router.post('/', auth, async (req, res) => {
   try {
-    const { skillId } = req.body;
+    const { skillId, paymentMethod = 'direct' } = req.body;
 
     if (!skillId) {
       return res.status(400).json({ error: 'SkillId obbligatorio' });
@@ -26,7 +52,6 @@ router.post('/', auth, async (req, res) => {
     const orderAmount = skill.price;
     const orderCurrency = skill.currency || 'USD';
 
-    // Mock: genera un indirizzo Monero fittizio
     const mockAddress = '8A1B2C3D4E5F6G7H8I9J0K' + Math.random().toString(36).substring(2, 8);
 
     const order = await Order.create({
@@ -39,10 +64,12 @@ router.post('/', auth, async (req, res) => {
       moneroAmount: orderAmount / 150,
       addressIndex: Math.floor(Math.random() * 1000),
       status: 'pending',
-      network: 'testnet'
+      network: 'testnet',
+      paymentMethod: paymentMethod === 'escrow' ? 'escrow' : 'direct',
+      escrowStatus: paymentMethod === 'escrow' ? mapToEscrowStatus('pending') : null
     });
 
-    res.status(201).json({
+    const response = {
       id: order.id,
       buyerId: order.buyerId,
       sellerId: order.sellerId,
@@ -53,8 +80,12 @@ router.post('/', auth, async (req, res) => {
       moneroAmount: order.moneroAmount,
       addressIndex: order.addressIndex,
       status: order.status,
-      network: order.network
-    });
+      network: order.network,
+      paymentMethod: order.paymentMethod,
+      escrowStatus: order.escrowStatus
+    };
+
+    res.status(201).json(response);
 
   } catch (error) {
     console.error('❌ Errore creazione ordine:', error);
@@ -116,6 +147,9 @@ router.patch('/:id/status', auth, async (req, res) => {
     order.status = status;
     if (status === 'paid') order.paidAt = new Date();
     if (status === 'completed') order.completedAt = new Date();
+    if (order.paymentMethod === 'escrow') {
+      order.escrowStatus = mapToEscrowStatus(status);
+    }
     await order.save();
 
     res.json(order);
@@ -136,6 +170,37 @@ router.get('/my-orders', auth, async (req, res) => {
   } catch (error) {
     console.error('❌ Errore recupero ordini:', error.message);
     res.status(500).json({ error: 'Errore recupero ordini' });
+  }
+});
+
+// ===== STATO ESCROW ORDINE =====
+router.get('/:id/escrow', auth, async (req, res) => {
+  try {
+    const order = await Order.findByPk(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: 'Ordine non trovato' });
+    }
+
+    if (order.buyerId !== req.user.id && order.sellerId !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accesso negato' });
+    }
+
+    if (order.paymentMethod !== 'escrow') {
+      return res.status(400).json({ error: 'Questo ordine non usa escrow' });
+    }
+
+    res.json({
+      orderId: order.id,
+      paymentMethod: order.paymentMethod,
+      escrowStatus: order.escrowStatus,
+      escrowId: order.escrowId,
+      marketplaceStatus: order.status,
+      amount: order.amount,
+      currency: order.currency
+    });
+  } catch (error) {
+    console.error('❌ Errore recupero escrow:', error.message);
+    res.status(500).json({ error: 'Errore recupero escrow' });
   }
 });
 

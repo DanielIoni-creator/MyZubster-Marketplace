@@ -78,6 +78,19 @@ module.exports = (sequelize) => {
     completedAt: {
       type: DataTypes.DATE,
       allowNull: true
+    },
+    paymentMethod: {
+      type: DataTypes.STRING,
+      defaultValue: 'direct',
+      allowNull: false
+    },
+    escrowStatus: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    escrowId: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     timestamps: true,
