@@ -139,6 +139,5 @@ describe('Webhook API', () => {
     await Skill.destroy({ where: {} });
     await User.destroy({ where: { email: 'webhook-seller@test.com' } });
     await User.destroy({ where: { email: 'webhook-buyer@test.com' } });
-    await sequelize.close();
   });
 });
