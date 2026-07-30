@@ -44,6 +44,9 @@ const Order = sequelize.define('Order', {
   amount: { type: DataTypes.FLOAT, allowNull: false },
   status: { type: DataTypes.STRING, defaultValue: 'pending' },
   payment_id: { type: DataTypes.STRING },
+  paymentMethod: { type: DataTypes.STRING, defaultValue: 'direct' },
+  escrowId: { type: DataTypes.STRING },
+  escrowStatus: { type: DataTypes.STRING },
 });
 
 const WebhookLog = sequelize.define('WebhookLog', {
