@@ -3,11 +3,16 @@ const cors = require('cors');
 const path = require('path');
 const { Sequelize, DataTypes } = require('sequelize');
 
+
+const escrowRoutes = require("./routes/escrow");
 const PORT = process.env.PORT || 4000;
 const app = express();
 
 // Middleware
 app.use(cors());
+
+app.use(escrowRoutes);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -47,6 +52,9 @@ const Order = sequelize.define('Order', {
   paymentMethod: { type: DataTypes.STRING, defaultValue: 'direct' },
   escrowId: { type: DataTypes.STRING },
   escrowStatus: { type: DataTypes.STRING },
+  moneroAddress: { type: DataTypes.STRING },
+  paidAt: { type: DataTypes.DATE },
+  completedAt: { type: DataTypes.DATE },
 });
 
 const WebhookLog = sequelize.define('WebhookLog', {
