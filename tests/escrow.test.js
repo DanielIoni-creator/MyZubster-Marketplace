@@ -1,7 +1,6 @@
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const app = require('../server');
-const { sequelize } = require('../server');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 function tokenFor(user) { return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' }); }
@@ -11,8 +10,7 @@ const sellerTok = tokenFor({ id: 2, email: 'seller@test.com', role: 'user' });
 const otherTok = tokenFor({ id: 99, email: 'other@test.com', role: 'user' });
 const adminTok = tokenFor({ id: 999, email: 'admin@test.com', role: 'admin' });
 
-beforeAll(async () => { await sequelize.sync({ force: true }); });
-afterAll(async () => { await sequelize.close(); });
+// Database sync/close handled by jest.setup.js
 
 let skillId = null;
 
