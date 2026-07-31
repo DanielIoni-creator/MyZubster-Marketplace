@@ -32,4 +32,4 @@ desktop.ini
 
 # Docker
 .dockerignore
-*.pid
+*.piddata/

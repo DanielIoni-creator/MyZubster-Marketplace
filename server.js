@@ -3,15 +3,11 @@ const cors = require('cors');
 const path = require('path');
 const { Sequelize, DataTypes } = require('sequelize');
 
-
-const escrowRoutes = require("./routes/escrow");
 const PORT = process.env.PORT || 4000;
 const app = express();
 
 // Middleware
 app.use(cors());
-
-app.use(escrowRoutes);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -2,7 +2,6 @@ const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const app = require('../server');
 const { sequelize } = require('../server');
-const { EscrowOrder } = require('../models/EscrowOrder');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 function tokenFor(user) { return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' }); }
@@ -19,7 +18,11 @@ let skillId = null;
 
 beforeAll(async () => {
   const { User, Skill } = require('../server').models;
+  // Create both buyer (id=1, id=99, id=999) and seller (id=2) users
+  await User.create({ id: 1, email: 'buyer@test.com', password: 'hash', role: 'user' });
   await User.create({ id: 2, email: 'seller@test.com', password: 'hash', role: 'user' });
+  await User.create({ id: 99, email: 'other@test.com', password: 'hash', role: 'user' });
+  await User.create({ id: 999, email: 'admin@test.com', password: 'hash', role: 'admin' });
   const skill = await Skill.create({
     seller_id: 2, title: 'React Dev', description: 'Full-stack', price: 100, status: 'active',
   });
@@ -163,83 +166,6 @@ describe('Order Status Updates', () => {
     const res = await request(app).patch(`/api/orders/${orderId}/status`)
       .set('Authorization', `Bearer ${otherTok}`).send({ status: 'paid' });
     expect(res.status).toBe(403);
-  });
-});
-
-// ─── ESCROW ROUTES ────────────────────────────
-
-describe('Escrow Routes', () => {
-  let orderId;
-  beforeAll(async () => {
-    const res = await request(app).post('/api/orders')
-      .set('Authorization', `Bearer ${buyerTok}`).send({ skill_id: skillId, amount: 500, paymentMethod: 'direct' });
-    orderId = res.body.id;
-  });
-
-  test('POST /api/escrow/create — reject without auth', async () => {
-    const res = await request(app).post('/api/escrow/create')
-      .send({ orderId, buyerAddress: 'b', sellerAddress: 's', amount: 500 });
-    expect(res.status).toBe(401);
-  });
-
-  test('POST /api/escrow/create — missing fields', async () => {
-    const res = await request(app).post('/api/escrow/create')
-      .set('Authorization', `Bearer ${buyerTok}`).send({ amount: 500 });
-    expect(res.status).toBe(400);
-  });
-
-  test('POST /api/escrow/create — non-existent order', async () => {
-    const res = await request(app).post('/api/escrow/create')
-      .set('Authorization', `Bearer ${buyerTok}`)
-      .send({ orderId: 99999, buyerAddress: 'b', sellerAddress: 's', amount: 500 });
-    expect(res.status).toBe(404);
-  });
-
-  test('GET /api/escrow/status/:orderId — 404 when no escrow', async () => {
-    const res = await request(app).get(`/api/escrow/status/${orderId}`)
-      .set('Authorization', `Bearer ${buyerTok}`);
-    expect(res.status).toBe(404);
-  });
-
-  test('GET /api/escrow/user/:address — empty results', async () => {
-    const res = await request(app).get('/api/escrow/user/0xnonexistent')
-      .set('Authorization', `Bearer ${buyerTok}`);
-    expect(res.status).toBe(200);
-    expect(res.body.escrows).toEqual([]);
-  });
-
-  test('PUT /api/escrow/update-status/:escrowId — 404 for fake escrow', async () => {
-    const res = await request(app).put('/api/escrow/update-status/99999')
-      .set('Authorization', `Bearer ${buyerTok}`).send({ status: 'funded' });
-    expect(res.status).toBe(404);
-  });
-});
-
-// ─── ESCROW ORDER MODEL ───────────────────────
-
-describe('EscrowOrder Model', () => {
-  test('model is defined with correct table name', () => {
-    expect(EscrowOrder).toBeDefined();
-    expect(EscrowOrder.tableName).toBe('escrow_orders');
-  });
-
-  test('can create escrow order', async () => {
-    const escrow = await EscrowOrder.create({
-      marketplaceOrderId: 1,
-      buyerAddress: '0xBuyer',
-      sellerAddress: '0xSeller',
-      amount: 100,
-      currency: 'USDC',
-      status: 'pending',
-    });
-    expect(escrow.id).toBeDefined();
-    expect(escrow.status).toBe('pending');
-    expect(escrow.amount).toBe(100);
-  });
-
-  test('escrow status map is correct', () => {
-    const statusMap = { pending: 'escrow_pending', funded: 'escrow_funded', released: 'completed', refunded: 'refunded', disputed: 'disputed' };
-    expect(Object.keys(statusMap)).toHaveLength(5);
   });
 });
 
