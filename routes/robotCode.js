@@ -1,10 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const robotCode = require('../robot_code_persistent');
+const robotCode = require('../robot_code');
 const robotBrain = require('../robot_brain');
-
-// Route di test per verificare il caricamento
-router.get('/test', (req, res) => res.json({ test: 'ok' }));
 
 // Crea un job di codice
 router.post('/create', async (req, res) => {
