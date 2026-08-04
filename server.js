@@ -22,6 +22,13 @@ app.use("/api/rewards/trigger", sensitiveLimiter);
 app.use("/api/bounty/create", sensitiveLimiter);
 app.use("/api/escrow/create", sensitiveLimiter);
 
+
+// Swagger/OpenAPI documentation
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+console.log('Swagger UI available at /api-docs');
+
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/myzubster')
   .then(() => console.log('✅ Connected to MongoDB'))
