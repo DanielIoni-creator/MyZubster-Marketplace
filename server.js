@@ -16,7 +16,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/myzubster
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ---------- API ROUTES ----------
+// ---------- API ROUTES (TUTTE prima del frontend SPA) ----------
 app.post('/buy-myz', (req, res) => {
   const { userTariWallet, amountMYZ } = req.body;
   const order = createOrder(userTariWallet, amountMYZ);
@@ -62,7 +62,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ---------- FRONTEND STATIC SERVING ----------
+// ---------- FRONTEND STATIC SERVING (DOPO le API) ----------
 const frontendDist = path.join(__dirname, 'frontend', 'dist');
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
@@ -77,7 +77,7 @@ if (fs.existsSync(frontendDist)) {
   console.log('ℹ️ Frontend dist not found. Run "npm run build" in frontend/ first.');
 }
 
-// ---------- START SERVER WITH GRACEFUL SHUTDOWN ----------
+// ---------- START SERVER ----------
 const PORT = process.env.PORT || 10000;
 const server = app.listen(PORT, () => {
   console.log(`🚀 Gateway running on http://localhost:${PORT}`);
