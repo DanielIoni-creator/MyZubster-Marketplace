@@ -12,7 +12,7 @@ async function generateLogo(prompt, style = 'modern') {
   const response = await axios.post(
     'https://api.openai.com/v1/images/generations',
     {
-      model: 'dall-e-3',
+      model: 'dall-e-2',
       prompt: `Create a professional logo: ${prompt}. Style: ${style}. Clean, minimal, modern, no text.`,
       n: 1,
       size: '1024x1024',
