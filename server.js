@@ -39,10 +39,15 @@ app.use('/api/bounty', require('./routes/bounty'));
 app.use('/api/stake', require('./routes/stake'));
 app.use('/api/escrow/house', require('./routes/escrowHouse'));
 
+console.log('✅ Caricamento routes robot...');
 app.use('/api/robot', require('./routes/robot'));
 app.use('/api/robot/escrow', require('./routes/robotEscrow'));
 app.use('/api/robot/logo', require('./routes/robotLogo'));
+
+console.log('✅ Caricamento routes robotCode...');
 app.use('/api/robot/code', require('./routes/robotCode'));
+
+console.log('✅ Caricamento routes robotAnimal...');
 app.use('/api/robot/animal', require('./routes/robotAnimal'));
 
 app.get('/health', (req, res) => {
