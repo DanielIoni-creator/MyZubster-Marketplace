@@ -64,6 +64,7 @@ app.use('/api/robot/code', require('./routes/robotCode'));
 app.use('/api/robot/animal', require('./routes/robotAnimal'));
 
 app.use('/api/ratelimit', require('./routes/ratelimit'));
+app.use('/api/webhooks', require('./routes/webhook'));
 
 app.get('/health', (req, res) => {
   res.json({
