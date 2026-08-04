@@ -1,0 +1,15 @@
+[build]
+  command = "npm install && npm install dotenv --save"
+  publish = "."
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-node-core-modules"
+
+[functions]
+  node_bundler = "esbuild"
+
+[dev]
+  framework = "express"
