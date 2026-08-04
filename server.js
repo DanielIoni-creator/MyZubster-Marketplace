@@ -8,19 +8,8 @@ const { createEscrow, lockFunds, submitProof, release, dispute, getEscrow } = re
 const { mint, balance } = require('./token_simulator');
 const { assignReward } = require('./services/rewardService');
 
-const { rateLimiter } = require('./middleware/rateLimiter');
-
 const app = express();
 app.use(express.json());
-
-// Global rate limiting (Bounty B15)
-app.use(rateLimiter({ windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) * 1000 || 900000, max: parseInt(process.env.RATE_LIMIT_MAX) || 100 }));
-
-// Per-endpoint rate limiting for sensitive routes
-const sensitiveLimiter = rateLimiter({ windowMs: 60000, max: 30, keyBy: "ip+endpoint" });
-app.use("/api/rewards/trigger", sensitiveLimiter);
-app.use("/api/bounty/create", sensitiveLimiter);
-app.use("/api/escrow/create", sensitiveLimiter);
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/myzubster')
@@ -56,8 +45,6 @@ app.use('/api/robot/logo', require('./routes/robotLogo'));
 app.use('/api/robot/code', require('./routes/robotCode'));
 app.use('/api/robot/animal', require('./routes/robotAnimal'));
 
-app.use('/api/ratelimit', require('./routes/ratelimit'));
-
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -73,24 +60,28 @@ app.get('/health', (req, res) => {
 // ---------- FRONTEND STATIC SERVING ----------
 const frontendDist = path.join(__dirname, 'frontend', 'dist');
 if (fs.existsSync(frontendDist)) {
-  // Serve static files
   app.use(express.static(frontendDist));
-
-  // SPA fallback: for any request not matching API or static, send index.html
   app.use((req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
       return next();
     }
     res.sendFile(path.join(frontendDist, 'index.html'));
   });
-
   console.log(`✅ Serving frontend from ${frontendDist}`);
 } else {
   console.log('ℹ️ Frontend dist not found. Run "npm run build" in frontend/ first.');
 }
 
-// ---------- START SERVER ----------
+// ---------- START SERVER WITH GRACEFUL SHUTDOWN ----------
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Gateway running on http://localhost:${PORT}`);
+});
+
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM ricevuto, chiusura graceful...');
+  server.close(() => {
+    console.log('✅ Server chiuso');
+    process.exit(0);
+  });
 });
