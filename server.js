@@ -58,6 +58,8 @@ app.use('/api/robot/animal', require('./routes/robotAnimal'));
 
 app.use('/api/ratelimit', require('./routes/ratelimit'));
 
+app.use('/api/backup', require('./routes/backup'));
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
