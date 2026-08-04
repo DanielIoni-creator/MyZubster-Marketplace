@@ -3,6 +3,9 @@ const router = express.Router();
 const robotCode = require('../robot_code');
 const robotBrain = require('../robot_brain');
 
+// ROTTA DI TEST PER VERIFICARE IL CARICAMENTO
+router.get('/test', (req, res) => res.json({ test: 'ok' }));
+
 // Crea un job di codice
 router.post('/create', async (req, res) => {
   try {
