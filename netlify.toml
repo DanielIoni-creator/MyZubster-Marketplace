@@ -1,15 +1,14 @@
 [build]
-  command = "npm install && npm install dotenv --save"
+  command = "echo 'No build needed'"
   publish = "."
 
 [build.environment]
   NODE_VERSION = "20"
 
-[[plugins]]
-  package = "@netlify/plugin-node-core-modules"
-
-[functions]
-  node_bundler = "esbuild"
-
 [dev]
   framework = "express"
+
+[[redirects]]
+  from = "/*"
+  to = "/"
+  status = 200
