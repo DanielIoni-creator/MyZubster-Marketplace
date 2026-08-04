@@ -65,6 +65,8 @@ app.use('/api/robot/animal', require('./routes/robotAnimal'));
 
 app.use('/api/ratelimit', require('./routes/ratelimit'));
 
+app.use('/api/webhooks/github', require('./routes/githubWebhook'));
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
