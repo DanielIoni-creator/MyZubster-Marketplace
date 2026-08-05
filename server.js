@@ -13,6 +13,9 @@ const swapRoutes = require('./routes/swap');
 const animalRoutes = require('./routes/animals');
 const plantRoutes = require('./routes/plants');
 const rewardRoutes = require('./routes/rewards');
+const contributorsRoutes = require('./routes/contributors');
+const developersRoutes = require('./routes/developers');
+const analyticsRoutes = require('./routes/analytics');
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -28,6 +31,9 @@ app.use('/api/swap', swapRoutes);
 app.use('/api/animals', animalRoutes);
 app.use('/api/plants', plantRoutes);
 app.use('/api/rewards', rewardRoutes);
+app.use('/api/contributors', contributorsRoutes);
+app.use('/api/developers', developersRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Robot routes
 try {
@@ -116,3 +122,8 @@ process.on('SIGINT', () => {
       });
   });
 });
+
+
+// Contributors stats
+
+// Contributors stats
