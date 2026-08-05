@@ -58,6 +58,9 @@ app.use('/api/stake', require('./routes/stake'));
 app.use('/api/escrow/house', require('./routes/escrowHouse'));
 
 app.use('/api/robot', require('./routes/robot'));
+// Feedback e reputazione (Bounty BOT-6): montato sullo stesso prefisso, dopo
+// routes/robot.js, che non ha catch-all e quindi lascia passare i path nuovi.
+app.use('/api/robot', require('./routes/robotFeedback'));
 app.use('/api/robot/escrow', require('./routes/robotEscrow'));
 app.use('/api/robot/logo', require('./routes/robotLogo'));
 app.use('/api/robot/code', require('./routes/robotCode'));
