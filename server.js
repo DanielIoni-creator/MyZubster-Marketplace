@@ -83,3 +83,8 @@ process.on('SIGTERM', () => {
     process.exit(0);
   });
 });
+
+// Serve static bounty page
+app.get('/bounty', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/dist/bounty.html'));
+});
