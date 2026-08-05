@@ -14,8 +14,6 @@ const animalRoutes = require('./routes/animals');
 const plantRoutes = require('./routes/plants');
 const rewardRoutes = require('./routes/rewards');
 const contributorsRoutes = require('./routes/contributors');
-const developersRoutes = require('./routes/developers');
-const analyticsRoutes = require('./routes/analytics');
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -32,8 +30,6 @@ app.use('/api/animals', animalRoutes);
 app.use('/api/plants', plantRoutes);
 app.use('/api/rewards', rewardRoutes);
 app.use('/api/contributors', contributorsRoutes);
-app.use('/api/developers', developersRoutes);
-app.use('/api/analytics', analyticsRoutes);
 
 // Robot routes
 try {
@@ -56,7 +52,7 @@ try {
 // ---- STATIC PAGES ----
 // Serve la pagina bounty statica
 app.get('/bounty', (req, res) => {
-  const bountyPath = path.join(__dirname, 'dist/bounty.html');
+  const bountyPath = path.join(__dirname, 'frontend/dist/bounty.html');
   res.sendFile(bountyPath, (err) => {
     if (err) {
       console.error('❌ Errore servendo bounty.html:', err.message);
@@ -91,7 +87,7 @@ const server = app.listen(PORT, () => {
   console.log(`🚀 Gateway running on http://localhost:${PORT}`);
 });
 
-// Graceful shutdown - CORRETTO
+// Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('🛑 SIGTERM ricevuto, chiusura graceful...');
   server.close(() => {
@@ -107,7 +103,6 @@ process.on('SIGTERM', () => {
   });
 });
 
-// Gestione SIGINT (Ctrl+C)
 process.on('SIGINT', () => {
   console.log('🛑 SIGINT ricevuto, chiusura graceful...');
   server.close(() => {
@@ -122,8 +117,3 @@ process.on('SIGINT', () => {
       });
   });
 });
-
-
-// Contributors stats
-
-// Contributors stats
