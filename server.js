@@ -47,17 +47,28 @@ try {
   console.error('❌ Errore caricamento logo:', err.message);
 }
 
+// ---- STATIC PAGES ----
+// Serve la pagina bounty statica
+app.get('/bounty', (req, res) => {
+  const bountyPath = path.join(__dirname, 'dist/bounty.html');
+  res.sendFile(bountyPath, (err) => {
+    if (err) {
+      console.error('❌ Errore servendo bounty.html:', err);
+      res.status(404).send('Pagina bounty non trovata');
+    }
+  });
+});
+
 // Static frontend
 const frontendPath = path.join(__dirname, 'frontend/dist');
 app.use(express.static(frontendPath));
 
-// SPA fallback - CORRETTO: usa una funzione middleware invece di app.get('*')
+// SPA fallback - usa middleware
 app.use((req, res, next) => {
-  // Se è una richiesta API, passa al prossimo middleware (404)
   if (req.path.startsWith('/api/')) {
     return next();
   }
-  // Altrimenti, serve index.html
+  // Se il file esiste, serve, altrimenti index.html
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
@@ -82,9 +93,4 @@ process.on('SIGTERM', () => {
     console.log('✅ Server chiuso');
     process.exit(0);
   });
-});
-
-// Serve static bounty page
-app.get('/bounty', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend/dist/bounty.html'));
 });
