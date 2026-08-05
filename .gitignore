@@ -1,1 +1,4 @@
 .env
+
+# Artefatti dei test di carico (Bounty P5)
+reports/
