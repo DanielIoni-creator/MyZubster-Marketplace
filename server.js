@@ -16,8 +16,8 @@ const rewardRoutes = require('./routes/rewards');
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
@@ -53,7 +53,7 @@ app.get('/bounty', (req, res) => {
   const bountyPath = path.join(__dirname, 'dist/bounty.html');
   res.sendFile(bountyPath, (err) => {
     if (err) {
-      console.error('❌ Errore servendo bounty.html:', err);
+      console.error('❌ Errore servendo bounty.html:', err.message);
       res.status(404).send('Pagina bounty non trovata');
     }
   });
@@ -63,12 +63,11 @@ app.get('/bounty', (req, res) => {
 const frontendPath = path.join(__dirname, 'frontend/dist');
 app.use(express.static(frontendPath));
 
-// SPA fallback - usa middleware
+// SPA fallback
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
     return next();
   }
-  // Se il file esiste, serve, altrimenti index.html
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
@@ -82,15 +81,38 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/myzubster
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Gateway running on http://localhost:${PORT}`);
 });
 
-// Graceful shutdown
+// Graceful shutdown - CORRETTO
 process.on('SIGTERM', () => {
   console.log('🛑 SIGTERM ricevuto, chiusura graceful...');
-  mongoose.connection.close(() => {
-    console.log('✅ Server chiuso');
-    process.exit(0);
+  server.close(() => {
+    mongoose.connection.close()
+      .then(() => {
+        console.log('✅ Server chiuso');
+        process.exit(0);
+      })
+      .catch(err => {
+        console.error('❌ Errore chiusura MongoDB:', err);
+        process.exit(1);
+      });
+  });
+});
+
+// Gestione SIGINT (Ctrl+C)
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT ricevuto, chiusura graceful...');
+  server.close(() => {
+    mongoose.connection.close()
+      .then(() => {
+        console.log('✅ Server chiuso');
+        process.exit(0);
+      })
+      .catch(err => {
+        console.error('❌ Errore chiusura MongoDB:', err);
+        process.exit(1);
+      });
   });
 });
