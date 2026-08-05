@@ -51,9 +51,17 @@ gateway_up() {
 
 if gateway_up; then
   echo "✅ Gateway già in ascolto su $BASE_URL"
+  echo "⚠️  Il gateway ha un rate limiter globale (default 100 richieste / 15 min per IP)."
+  echo "    Se non è stato avviato con RATE_LIMIT_MAX alto, il test misurerà il limiter"
+  echo "    e non il gateway. Riavvialo con: RATE_LIMIT_MAX=10000000 npm start"
 elif [[ "$START_SERVER" -eq 1 ]]; then
-  echo "🚀 Avvio del gateway..."
-  npm start >"$REPORT_DIR/server.log" 2>&1 &
+  echo "🚀 Avvio del gateway (rate limiter alzato per il test)..."
+  # Il rate limiter globale (Bounty B15) blocca a 100 richieste per IP: un test
+  # di carico da una singola macchina lo saturerebbe in un secondo e misurerebbe
+  # il limiter invece del gateway. Qui lo alziamo solo per il processo di test.
+  RATE_LIMIT_MAX="${RATE_LIMIT_MAX:-10000000}" \
+  RATE_LIMIT_WINDOW="${RATE_LIMIT_WINDOW:-60}" \
+    npm start >"$REPORT_DIR/server.log" 2>&1 &
   SERVER_PID=$!
   for _ in $(seq 1 30); do
     gateway_up && break

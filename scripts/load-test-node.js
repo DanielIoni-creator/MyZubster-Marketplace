@@ -107,13 +107,16 @@ function request(target, { method = 'GET', body = null } = {}) {
 // -------------------------------------------------------------- raccolta
 
 function createStats() {
-  return { total: 0, failed: 0, durations: [], byFlow: new Map() };
+  return { total: 0, failed: 0, rateLimited: 0, durations: [], byFlow: new Map() };
 }
 
 function record(stats, flow, res, expected) {
   const ok = expected.includes(res.status);
   stats.total += 1;
   if (!ok) stats.failed += 1;
+  // Il gateway ha un rate limiter globale: contare i 429 a parte evita di
+  // scambiare "limiter saturo" per "gateway lento".
+  if (res.status === 429) stats.rateLimited += 1;
   stats.durations.push(res.duration);
   if (!stats.byFlow.has(flow)) stats.byFlow.set(flow, []);
   stats.byFlow.get(flow).push(res.duration);
@@ -307,6 +310,15 @@ async function main() {
     '  ─────────────────────────────────────────────────────────',
     ''
   ].join('\n'));
+
+  if (stats.rateLimited > 0) {
+    const share = ((stats.rateLimited / stats.total) * 100).toFixed(1);
+    console.warn(
+      `⚠️  ${stats.rateLimited} richieste (${share}%) respinte con 429 dal rate limiter globale.\n` +
+      '   I risultati misurano il limiter, non il gateway. Riavvia il server con\n' +
+      '   un limite più alto, es.:  RATE_LIMIT_MAX=10000000 RATE_LIMIT_WINDOW=60 npm start'
+    );
+  }
 
   // Report automatico subito dopo il test, senza passaggi manuali.
   const { render, parseK6 } = require('./load-report');

@@ -29,6 +29,9 @@ const REPORT_DIR = __ENV.REPORT_DIR || 'reports/load';
 
 const errors = new Counter('gateway_errors');
 const businessErrorRate = new Rate('gateway_business_error_rate');
+// Il gateway ha un rate limiter globale: contare i 429 a parte evita di
+// scambiare "limiter saturo" per "gateway lento".
+const rateLimited = new Counter('gateway_rate_limited');
 
 const healthLatency = new Trend('flow_health_duration', true);
 const robotCreateLatency = new Trend('flow_robot_create_duration', true);
@@ -102,6 +105,7 @@ function track(trend, res, name, expectedStatuses) {
     [`${name}: risposta non vuota`]: r => r.body !== null && r.body.length > 0
   });
   businessErrorRate.add(!ok);
+  if (res.status === 429) rateLimited.add(1, { flow: name });
   if (!ok) {
     errors.add(1, { flow: name, status: String(res.status) });
   }
@@ -112,6 +116,13 @@ function track(trend, res, name, expectedStatuses) {
 
 export function setup() {
   const res = http.get(`${BASE_URL}/health`, { timeout: '10s' });
+  if (res.status === 429) {
+    throw new Error(
+      `Il gateway su ${BASE_URL} risponde 429: il rate limiter globale è già saturo. ` +
+      'Riavvialo con RATE_LIMIT_MAX=10000000 RATE_LIMIT_WINDOW=60 npm start, ' +
+      'altrimenti il test misura il limiter e non il gateway.'
+    );
+  }
   if (res.status !== 200) {
     throw new Error(
       `Gateway non raggiungibile su ${BASE_URL}/health (status ${res.status}). ` +
@@ -207,6 +218,7 @@ function buildMarkdown(data, meta) {
   const rps = pick(m, 'http_reqs', 'rate');
   const failRate = pick(m, 'http_req_failed', 'rate');
   const checkRate = pick(m, 'checks', 'rate');
+  const throttled = pick(m, 'gateway_rate_limited', 'count') || 0;
 
   const flows = [
     ['GET /health', 'flow_health_duration'],
@@ -257,6 +269,17 @@ function buildMarkdown(data, meta) {
     lines.push(
       `| \`${label}\` | ${fmt(pick(m, metric, 'avg'), 1, ' ms')} | ${fmt(pick(m, metric, 'p(95)'), 1, ' ms')} ` +
       `| ${fmt(pick(m, metric, 'p(99)'), 1, ' ms')} | ${fmt(pick(m, metric, 'max'), 1, ' ms')} |`
+    );
+  }
+
+  if (throttled > 0) {
+    lines.push(
+      '',
+      '## ⚠️ Rate limiting',
+      '',
+      `**${throttled} richieste sono state respinte con 429 dal rate limiter globale.**`,
+      'I numeri qui sopra misurano il limiter, non il gateway. Riavvia il server con',
+      '`RATE_LIMIT_MAX=10000000 RATE_LIMIT_WINDOW=60 npm start` e ripeti il test.'
     );
   }
 

@@ -7,9 +7,11 @@ Bounty P5 (#269). Scenari di carico per il gateway con **k6** e **Artillery**, p
 Il runner Node non richiede di installare niente: usa solo il modulo `http` della standard library.
 
 ```bash
-npm start                 # in un terminale
-npm run loadtest          # 100 utenti concorrenti per 60 s
+RATE_LIMIT_MAX=10000000 RATE_LIMIT_WINDOW=60 npm start   # in un terminale
+npm run loadtest                                          # 100 utenti concorrenti per 60 s
 ```
+
+> ⚠️ **Il rate limiter va alzato prima di misurare.** Il gateway monta un rate limiter globale (Bounty B15) che di default respinge oltre **100 richieste ogni 15 minuti per IP**. Un test di carico da una singola macchina lo satura in meno di un secondo: senza alzare `RATE_LIMIT_MAX` si misura il limiter, non il gateway. Tutti e tre i runner **rilevano i 429 e lo segnalano esplicitamente** invece di riportarli come normali fallimenti.
 
 Con k6 installato, questo avvia anche il gateway se non è già attivo:
 
