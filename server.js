@@ -21,6 +21,8 @@ app.use(rateLimiter({ windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) * 1000 |
 const sensitiveLimiter = rateLimiter({ windowMs: 60000, max: 30, keyBy: "ip+endpoint" });
 app.use("/api/rewards/trigger", sensitiveLimiter);
 app.use("/api/bounty/create", sensitiveLimiter);
+app.use('/api/animals', require('./routes/animals'));
+app.use('/api/plants', require('./routes/plants'));
 app.use("/api/escrow/create", sensitiveLimiter);
 
 // Audit logging delle azioni critiche (pagamenti, escrow, robot, bounty).
@@ -60,6 +62,8 @@ app.post('/escrow/create', (req, res) => {
 
 app.use('/api/rewards', require('./routes/rewards'));
 app.use('/api/bounty', require('./routes/bounty'));
+app.use('/api/animals', require('./routes/animals'));
+app.use('/api/plants', require('./routes/plants'));
 app.use('/api/stake', require('./routes/stake'));
 app.use('/api/escrow/house', require('./routes/escrowHouse'));
 
