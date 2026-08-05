@@ -9,6 +9,7 @@ const { mint, balance } = require('./token_simulator');
 const { assignReward } = require('./services/rewardService');
 
 const { rateLimiter } = require('./middleware/rateLimiter');
+const { auditLogger } = require('./middleware/auditLogger');
 
 const app = express();
 app.use(express.json());
@@ -22,6 +23,11 @@ app.use("/api/rewards/trigger", sensitiveLimiter);
 app.use("/api/bounty/create", sensitiveLimiter);
 app.use("/api/escrow/create", sensitiveLimiter);
 
+// Audit logging delle azioni critiche (pagamenti, escrow, robot, bounty).
+// Va montato dopo express.json(), perché legge req.body, e dopo i rate limiter:
+// una richiesta respinta con 429 non ha compiuto nessuna azione di business,
+// quindi non deve finire nell'audit trail.
+app.use(auditLogger());
 
 // Swagger/OpenAPI documentation
 const swaggerUi = require('swagger-ui-express');
@@ -67,6 +73,8 @@ app.use('/api/ratelimit', require('./routes/ratelimit'));
 app.use('/api/webhooks', require('./routes/webhook'));
 
 app.use('/api/webhooks/github', require('./routes/githubWebhook'));
+
+app.use('/api/audit', require('./routes/audit'));
 
 app.get('/health', (req, res) => {
   res.json({
