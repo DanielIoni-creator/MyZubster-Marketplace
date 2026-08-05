@@ -4,12 +4,21 @@ const { mint } = require('../token_simulator');
 
 exports.registerAnimal = async (req, res) => {
   try {
-    const { species, location, userId, description } = req.body;
-    if (!species || !location || !userId) {
-      return res.status(400).json({ error: 'Missing required fields: species, location, userId' });
+    const { species, place, userId, description } = req.body;
+    
+    if (!species || !place || !userId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required fields: species, place, userId' 
+      });
     }
 
-    const newAnimal = new Animal({ species, location, description, registeredBy: userId });
+    const newAnimal = new Animal({ 
+      species, 
+      place,
+      description, 
+      registeredBy: userId 
+    });
     await newAnimal.save();
 
     const rewardAmount = parseInt(process.env.REWARD_ANIMAL_REGISTRATION) || 10;
@@ -29,7 +38,7 @@ exports.registerAnimal = async (req, res) => {
       success: true,
       animalId: newAnimal._id,
       species,
-      location,
+      place,
       reward: {
         amount: rewardAmount,
         currency: 'MYZ',
@@ -38,50 +47,58 @@ exports.registerAnimal = async (req, res) => {
     });
   } catch (err) {
     console.error('❌ Errore registrazione animale:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ 
+      success: false, 
+      error: err.message 
+    });
   }
 };
 
 exports.getAnimals = async (req, res) => {
   try {
-    const animals = await Animal.find();
+    const animals = await Animal.find().sort({ registeredAt: -1 }).limit(100);
     res.json({ success: true, data: animals });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
 exports.getAnimalById = async (req, res) => {
   try {
     const animal = await Animal.findById(req.params.id);
-    if (!animal) return res.status(404).json({ error: 'Animale non trovato' });
+    if (!animal) {
+      return res.status(404).json({ success: false, error: 'Animale non trovato' });
+    }
     res.json({ success: true, data: animal });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
 exports.updateAnimal = async (req, res) => {
   try {
-    const { species, location, description } = req.body;
     const animal = await Animal.findByIdAndUpdate(
       req.params.id,
-      { species, location, description, updatedAt: new Date() },
+      req.body,
       { new: true, runValidators: true }
     );
-    if (!animal) return res.status(404).json({ error: 'Animale non trovato' });
+    if (!animal) {
+      return res.status(404).json({ success: false, error: 'Animale non trovato' });
+    }
     res.json({ success: true, data: animal });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
 exports.deleteAnimal = async (req, res) => {
   try {
     const animal = await Animal.findByIdAndDelete(req.params.id);
-    if (!animal) return res.status(404).json({ error: 'Animale non trovato' });
+    if (!animal) {
+      return res.status(404).json({ success: false, error: 'Animale non trovato' });
+    }
     res.json({ success: true, message: 'Animale eliminato' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 };
