@@ -8,15 +8,33 @@ const { createEscrow, lockFunds, submitProof, release, dispute, getEscrow } = re
 const { mint, balance } = require('./token_simulator');
 const { assignReward } = require('./services/rewardService');
 
+const { rateLimiter } = require('./middleware/rateLimiter');
+
 const app = express();
 app.use(express.json());
+
+// Global rate limiting (Bounty B15)
+app.use(rateLimiter({ windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) * 1000 || 900000, max: parseInt(process.env.RATE_LIMIT_MAX) || 100 }));
+
+// Per-endpoint rate limiting for sensitive routes
+const sensitiveLimiter = rateLimiter({ windowMs: 60000, max: 30, keyBy: "ip+endpoint" });
+app.use("/api/rewards/trigger", sensitiveLimiter);
+app.use("/api/bounty/create", sensitiveLimiter);
+app.use("/api/escrow/create", sensitiveLimiter);
+
+
+// Swagger/OpenAPI documentation
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+console.log('Swagger UI available at /api-docs');
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/myzubster')
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ---------- API ROUTES (TUTTE prima del frontend SPA) ----------
+// ---------- API ROUTES ----------
 app.post('/buy-myz', (req, res) => {
   const { userTariWallet, amountMYZ } = req.body;
   const order = createOrder(userTariWallet, amountMYZ);
@@ -39,18 +57,14 @@ app.use('/api/bounty', require('./routes/bounty'));
 app.use('/api/stake', require('./routes/stake'));
 app.use('/api/escrow/house', require('./routes/escrowHouse'));
 
-console.log('✅ Caricamento routes robot...');
 app.use('/api/robot', require('./routes/robot'));
 app.use('/api/robot/escrow', require('./routes/robotEscrow'));
 app.use('/api/robot/logo', require('./routes/robotLogo'));
-
-console.log('✅ Caricamento routes robotCode...');
 app.use('/api/robot/code', require('./routes/robotCode'));
-
-console.log('✅ Caricamento routes robotAnimal...');
 app.use('/api/robot/animal', require('./routes/robotAnimal'));
 
-app.use('/api/backup', require('./routes/backup'));
+app.use('/api/ratelimit', require('./routes/ratelimit'));
+app.use('/api/webhooks', require('./routes/webhook'));
 
 app.get('/health', (req, res) => {
   res.json({
@@ -64,16 +78,20 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ---------- FRONTEND STATIC SERVING (DOPO le API) ----------
+// ---------- FRONTEND STATIC SERVING ----------
 const frontendDist = path.join(__dirname, 'frontend', 'dist');
 if (fs.existsSync(frontendDist)) {
+  // Serve static files
   app.use(express.static(frontendDist));
+
+  // SPA fallback: for any request not matching API or static, send index.html
   app.use((req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
       return next();
     }
     res.sendFile(path.join(frontendDist, 'index.html'));
   });
+
   console.log(`✅ Serving frontend from ${frontendDist}`);
 } else {
   console.log('ℹ️ Frontend dist not found. Run "npm run build" in frontend/ first.');
@@ -81,14 +99,6 @@ if (fs.existsSync(frontendDist)) {
 
 // ---------- START SERVER ----------
 const PORT = process.env.PORT || 10000;
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`🚀 Gateway running on http://localhost:${PORT}`);
-});
-
-process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM ricevuto, chiusura graceful...');
-  server.close(() => {
-    console.log('✅ Server chiuso');
-    process.exit(0);
-  });
 });
