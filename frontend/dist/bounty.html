@@ -23,6 +23,28 @@
     .stat-number { font-size: 2.5rem; font-weight: bold; color: #4A90D9; }
     .stat-label { color: #a0a0b0; font-size: 0.9rem; }
     
+    /* Top Contributors Section */
+    .section { margin-top: 40px; padding: 40px 20px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+    .section h2 { text-align: center; font-size: 2rem; margin-bottom: 10px; }
+    .total-myz { text-align: center; font-size: 1.5rem; color: #2ECC71; margin: 10px 0 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
+    .card {
+      background: rgba(255,255,255,0.05);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s;
+    }
+    .card:hover { border-color: rgba(74, 144, 217, 0.3); transform: translateY(-2px); }
+    .name { font-weight: bold; color: #4A90D9; }
+    .amount { font-weight: bold; color: #2ECC71; }
+    .badge { font-size: 0.8rem; padding: 2px 10px; border-radius: 12px; background: rgba(74, 144, 217, 0.2); color: #4A90D9; margin-left: 10px; }
+    .rank { font-weight: bold; color: #F39C12; margin-right: 10px; }
+    .loading { text-align: center; color: #a0a0b0; padding: 20px; }
+    
     .bounty-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -76,32 +98,6 @@
       transition: all 0.3s;
     }
     .github-link:hover { background: rgba(255,255,255,0.15); border-color: #4A90D9; }
-    
-    .section { margin-top: 40px; padding: 40px 20px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
-    .section h2 { text-align: center; font-size: 2rem; margin-bottom: 10px; }
-    .section .subtitle { text-align: center; margin-bottom: 20px; }
-    .loading { text-align: center; color: #a0a0b0; padding: 20px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
-    .card {
-      background: rgba(255,255,255,0.05);
-      padding: 16px 20px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.05);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.3s;
-    }
-    .card:hover { border-color: rgba(74, 144, 217, 0.3); transform: translateY(-2px); }
-    .name { font-weight: bold; color: #4A90D9; }
-    .amount { font-weight: bold; color: #2ECC71; }
-    .badge { font-size: 0.8rem; padding: 2px 10px; border-radius: 12px; background: rgba(74, 144, 217, 0.2); color: #4A90D9; margin-left: 10px; }
-    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2ECC71; margin-right: 8px; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .list-item { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; }
-    .list-item:last-child { border-bottom: none; }
-    .total-myz { text-align: center; font-size: 1.5rem; color: #2ECC71; margin: 10px 0 20px; }
-    
     @media (max-width: 768px) {
       h1 { font-size: 2.2rem; }
       .bounty-grid { grid-template-columns: 1fr; }
@@ -198,7 +194,7 @@
           list.innerHTML = data.data.contributors.slice(0, 10).map((c, i) => `
             <div class="card">
               <div>
-                <span style="font-weight:bold;color:#F39C12;margin-right:10px;">${medals[i] || `#${i+1}`}</span>
+                <span class="rank">${medals[i] || `#${i+1}`}</span>
                 <span class="name">${c.userId}</span>
                 <span class="badge">${c.count} bounty${c.count > 1 ? 's' : ''}</span>
               </div>
