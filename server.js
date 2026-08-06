@@ -6,13 +6,12 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// CORS - Permetti richieste dal dominio myzubster.com
+// CORS
 app.use(cors({
   origin: ['https://myzubster.com', 'https://www.myzubster.com'],
   credentials: true
 }));
 
-// Middleware
 app.use(express.json());
 
 // Import routes
@@ -20,8 +19,8 @@ const swapRoutes = require('./routes/swap');
 const animalRoutes = require('./routes/animals');
 const plantRoutes = require('./routes/plants');
 const rewardRoutes = require('./routes/rewards');
-const sensorRoutes = require('./routes/sensors');
 const contributorsRoutes = require('./routes/contributors');
+const sensorRoutes = require('./routes/sensors');
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -37,8 +36,8 @@ app.use('/api/swap', swapRoutes);
 app.use('/api/animals', animalRoutes);
 app.use('/api/plants', plantRoutes);
 app.use('/api/rewards', rewardRoutes);
-app.use('/api/sensors', sensorRoutes);
 app.use('/api/contributors', contributorsRoutes);
+app.use('/api/sensors', sensorRoutes);
 
 // Robot routes
 try {
@@ -58,9 +57,14 @@ try {
   console.error('❌ Errore caricamento logo:', err.message);
 }
 
-// ---- BOUNTY PAGE (DIRECT HTML) ----
+// ---- BOUNTY PAGE ----
 app.get('/bounty', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend/dist/bounty.html'));
+});
+
+// Urban Garden Dashboard
+app.get('/garden', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/dist/garden.html'));
 });
 
 // Static frontend
@@ -118,13 +122,4 @@ process.on('SIGINT', () => {
         process.exit(1);
       });
   });
-});
-
-// Sensor routes - Arduino pH/EC for Urban Gardens
-const sensorRoutes = require('./routes/sensors');
-app.use('/api/sensors', sensorRoutes);
-
-// Urban Garden Dashboard (static version)
-app.get('/garden', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend/dist/garden.html'));
 });
