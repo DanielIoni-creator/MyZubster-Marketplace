@@ -49,7 +49,6 @@
           document.getElementById('ec').textContent = latest.ec;
           document.getElementById('temp').textContent = latest.temperature + '°C';
           document.getElementById('humidity').textContent = latest.humidity + '%';
-          // Storico
           let html = '<table><tr><th>Data/Ora</th><th>pH</th><th>EC</th><th>Temp</th><th>Umidità</th></tr>';
           data.data.slice(0, 10).forEach(d => {
             html += `<tr><td>${new Date(d.timestamp).toLocaleString()}</td><td>${d.ph}</td><td>${d.ec}</td><td>${d.temperature}°C</td><td>${d.humidity}%</td></tr>`;
