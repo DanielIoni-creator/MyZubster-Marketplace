@@ -1,130 +1,80 @@
 const express = require('express');
-const axios = require('axios');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
-const { Sequelize, DataTypes } = require('sequelize');
 
-const PORT = process.env.PORT || 4000;
 const app = express();
+const PORT = process.env.PORT || 4000;
 
 // Middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database setup con Sequelize
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: process.env.DB_PATH || path.join(__dirname, 'data', 'marketplace.db'),
-  logging: false,
+// Servi file statici dalla cartella frontend
+app.use(express.static('frontend'));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
 });
+app.use('/api', limiter);
 
-// Definisci i modelli
-const User = sequelize.define('User', {
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  email: { type: DataTypes.STRING, unique: true, allowNull: false },
-  password: { type: DataTypes.STRING, allowNull: false },
-  role: { type: DataTypes.STRING, defaultValue: 'user' },
-});
+// Connessione MongoDB (SENZA opzioni deprecate)
+mongoose.connect('mongodb://localhost:27017/myzubster')
+  .then(() => console.log('✅ MongoDB connesso'))
+  .catch(err => console.error('❌ MongoDB errore:', err));
 
-const Skill = sequelize.define('Skill', {
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  seller_id: { type: DataTypes.INTEGER, allowNull: false },
-  title: { type: DataTypes.STRING, allowNull: false },
-  description: { type: DataTypes.TEXT },
-  price: { type: DataTypes.FLOAT, allowNull: false },
-  category: { type: DataTypes.STRING },
-  status: { type: DataTypes.STRING, defaultValue: 'active' },
-});
-
-const Order = sequelize.define('Order', {
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  buyer_id: { type: DataTypes.INTEGER, allowNull: false },
-  seller_id: { type: DataTypes.INTEGER, allowNull: false },
-  skill_id: { type: DataTypes.INTEGER, allowNull: false },
-  amount: { type: DataTypes.FLOAT, allowNull: false },
-  status: { type: DataTypes.STRING, defaultValue: 'pending' },
-  payment_id: { type: DataTypes.STRING },
-  paymentMethod: {
-    type: DataTypes.ENUM('standard', 'escrow'),
-    defaultValue: 'standard'
-  },
-  escrowId: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  escrowStatus: {
-    type: DataTypes.ENUM('pending', 'funded', 'completed', 'disputed', 'refunded'),
-    allowNull: true
-  },
-});
-
-const WebhookLog = sequelize.define('WebhookLog', {
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  order_id: { type: DataTypes.INTEGER },
-  event: { type: DataTypes.STRING },
-  payload: { type: DataTypes.TEXT },
-  status: { type: DataTypes.STRING },
-});
-
-// Relazioni
-Skill.belongsTo(User, { foreignKey: 'seller_id', as: 'seller' });
-Order.belongsTo(User, { foreignKey: 'buyer_id', as: 'buyer' });
-Order.belongsTo(User, { foreignKey: 'seller_id', as: 'seller' });
-Order.belongsTo(Skill, { foreignKey: 'skill_id', as: 'skill' });
-
-// Middleware per iniettare i modelli nelle route
-app.use((req, res, next) => {
-  req.models = { User, Skill, Order, WebhookLog };
-  next();
-});
-
-// Import routes
+// Import delle route
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
 const skillRoutes = require('./routes/skills');
 const orderRoutes = require('./routes/orders');
+const pgpRoutes = require('./routes/pgp');
+const nftRoutes = require('./routes/nft');
 const webhookRoutes = require('./routes/webhook');
-const userRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin');
+const gardenRoutes = require('./routes/gardens');
 
+// Uso delle route
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/pgp', pgpRoutes);
+app.use('/api/nft', nftRoutes);
 app.use('/api/webhook', webhookRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/gardens', gardenRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    service: 'MyZubster-Marketplace',
-    version: '1.0.0',
-    database: 'sqlite'
-  });
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Error handling
+// Root
+app.get('/', (req, res) => {
+  res.json({ message: 'MyZubster Marketplace API', version: '1.0.0' });
+});
+
+// Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('❌ Errore:', err.stack);
+  res.status(500).json({ error: err.message });
 });
 
-// Esporta app e sequelize
-module.exports = app;
-module.exports.sequelize = sequelize;
-module.exports.models = { User, Skill, Order, WebhookLog };
+// Avvia server
+app.listen(PORT, () => {
+  console.log(`🚀 Server avviato sulla porta ${PORT}`);
+  console.log(`🌐 URL: http://localhost:${PORT}`);
+  console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🗺️  Mappa: http://localhost:${PORT}/garden-map.html`);
+  console.log('✅ Garden routes loaded');
+  console.log('✅ Frontend servito da /frontend');
+});
 
-// Avvia il server SOLO se eseguito direttamente
-if (require.main === module) {
-  sequelize.sync({ alter: true }).then(() => {
-    console.log('✅ Database sincronizzato (Sequelize)');
-    app.listen(PORT, () => {
-      console.log(`🚀 Server avviato sulla porta ${PORT}`);
-      console.log(`🌐 URL: http://localhost:${PORT}`);
-      console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
-    });
-  }).catch(err => {
-    console.error('❌ Errore database:', err);
-    process.exit(1);
-  });
-}
+module.exports = app;
