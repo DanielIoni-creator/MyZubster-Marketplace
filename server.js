@@ -155,3 +155,8 @@ process.on('SIGINT', () => {
       });
   });
 });
+
+// Urban Garden Dashboard
+app.get('/garden', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/dist/garden.html'));
+});
