@@ -43,6 +43,7 @@ const rewardRoutes = require('./routes/rewards');
 const contributorsRoutes = require('./routes/contributors');
 const sensorRoutes = require('./routes/sensors');
 const securityRoutes = require('./routes/security');
+const xmrRoutes = require('./routes/xmr');
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -63,6 +64,7 @@ app.use('/api/rewards', rewardRoutes);
 app.use('/api/contributors', contributorsRoutes);
 app.use('/api/sensors', sensorRoutes);
 app.use('/api/security', securityRoutes);
+app.use('/api/xmr', xmrRoutes);
 
 // Robot routes
 try {
