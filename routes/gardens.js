@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/gardens/:id - Dettaglio orto (DEVE ESSERE DOPO /nearby)
+// GET /api/gardens/:id - Dettaglio orto
 router.get('/:id', async (req, res) => {
   try {
     const garden = await gardenService.getGardenById(req.params.id);
