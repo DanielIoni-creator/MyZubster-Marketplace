@@ -138,3 +138,17 @@ MIT © 2026 MyZubster
     Issues: https://github.com/MyZubster-Ecosystem/MyZubsterGateway/issues
 
     Telegram: @Myzubster_bot
+
+## 🌱 BOUNTY GREEN - Orti Urbani
+
+| # | Bounty | Reward | Stato |
+|---|--------|--------|-------|
+| #742 | API Arduino per sensori pH/EC | 0.08 XMR (o 500 MYZ) | ✅ Assegnata |
+
+### Cosa serve
+- REST API per sensori pH, EC, temperatura
+- Storage dati in MongoDB
+- Integrazione con EVA brain
+- Documentazione API
+
+🔗 https://github.com/MyZubster-Ecosystem/MyZubsterGateway/issues/742
