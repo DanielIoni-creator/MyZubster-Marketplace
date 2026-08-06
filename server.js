@@ -8,10 +8,9 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 // ---- GIN GUARDIAN SECURITY ----
-// Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minuti
-  max: 100, // massimo 100 richieste per IP
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: '⚠️ Troppe richieste, riprova più tardi.',
   standardHeaders: true,
   legacyHeaders: false
@@ -34,16 +33,15 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use(limiter); // Applica rate limiting a TUTTE le route
+app.use(limiter);
 
-// Import routes
+// Import routes - UNA SOLA VOLTA
 const swapRoutes = require('./routes/swap');
 const animalRoutes = require('./routes/animals');
 const plantRoutes = require('./routes/plants');
 const rewardRoutes = require('./routes/rewards');
 const contributorsRoutes = require('./routes/contributors');
 const sensorRoutes = require('./routes/sensors');
-const securityRoutes = require('./routes/security');
 const securityRoutes = require('./routes/security');
 
 // Health check
@@ -57,14 +55,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Routes API
+// Routes API - UNA SOLA VOLTA
 app.use('/api/swap', swapRoutes);
 app.use('/api/animals', animalRoutes);
 app.use('/api/plants', plantRoutes);
 app.use('/api/rewards', rewardRoutes);
 app.use('/api/contributors', contributorsRoutes);
 app.use('/api/sensors', sensorRoutes);
-app.use('/api/security', securityRoutes);
 app.use('/api/security', securityRoutes);
 
 // Robot routes
@@ -85,12 +82,11 @@ try {
   console.error('❌ Errore caricamento logo:', err.message);
 }
 
-// ---- BOUNTY PAGE ----
+// ---- STATIC PAGES ----
 app.get('/bounty', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend/dist/bounty.html'));
 });
 
-// Urban Garden Dashboard
 app.get('/garden', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend/dist/garden.html'));
 });
@@ -109,10 +105,7 @@ app.use((req, res, next) => {
 
 // Error handler per 404
 app.use((req, res) => {
-  res.status(404).json({ 
-    error: 'Not found',
-    path: req.path 
-  });
+  res.status(404).json({ error: 'Not found' });
 });
 
 // MongoDB connection
@@ -154,9 +147,4 @@ process.on('SIGINT', () => {
         process.exit(1);
       });
   });
-});
-
-// Urban Garden Dashboard
-app.get('/garden', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend/dist/garden.html'));
 });
