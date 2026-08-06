@@ -123,3 +123,8 @@ process.on('SIGINT', () => {
 // Sensor routes - Arduino pH/EC for Urban Gardens
 const sensorRoutes = require('./routes/sensors');
 app.use('/api/sensors', sensorRoutes);
+
+// Urban Garden Dashboard (static version)
+app.get('/garden', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/dist/garden.html'));
+});
