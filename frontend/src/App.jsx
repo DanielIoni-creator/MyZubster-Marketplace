@@ -15,3 +15,7 @@ function App() {
 }
 
 export default App;
+import UrbanGardenDashboard from './pages/UrbanGardenDashboard';
+
+// Aggiungi la route
+<Route path="/garden" element={<UrbanGardenDashboard />} />
