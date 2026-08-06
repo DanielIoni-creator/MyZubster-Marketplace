@@ -21,10 +21,16 @@ mongoose.connect('mongodb://localhost:27017/myzubster')
   .catch(err => console.error('❌ MongoDB errore:', err));
 
 // ============================================================
-// ROUTE GARDENS - Implementata per la bounty #743
+// ROUTE GARDENS - Bounty #743
 // ============================================================
 const gardenRoutes = require('./routes/gardens');
 app.use('/api/gardens', gardenRoutes);
+
+// ============================================================
+// ROUTE SENSORS - Bounty #742
+// ============================================================
+const sensorRoutes = require('./routes/sensors');
+app.use('/api/sensors', sensorRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -43,6 +49,7 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/api/health',
       gardens: '/api/gardens',
+      sensors: '/api/sensors',
       garden_map: '/garden-map.html'
     }
   });
@@ -61,7 +68,9 @@ app.listen(PORT, () => {
   console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🗺️  Mappa: http://localhost:${PORT}/garden-map.html`);
   console.log(`🌱 Gardens API: http://localhost:${PORT}/api/gardens`);
+  console.log(`📡 Sensors API: http://localhost:${PORT}/api/sensors`);
   console.log('✅ Gardens routes loaded');
+  console.log('✅ Sensors routes loaded');
   console.log('✅ Frontend servito da /frontend');
 });
 
