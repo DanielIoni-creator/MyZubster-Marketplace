@@ -75,3 +75,33 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
+// Endpoint per robot - riceve job dai robot
+app.post('/api/robot/assign', (req, res) => {
+  const { robotId, jobId, clientId, amount, currency, description, location } = req.body;
+  
+  if (!robotId || !jobId || !clientId || !amount) {
+    return res.status(400).json({ error: 'robotId, jobId, clientId and amount are required' });
+  }
+
+  // Crea un job nel sistema
+  const job = {
+    id: jobId,
+    robotId,
+    clientId,
+    amount,
+    currency: currency || 'MYZ',
+    description: description || 'Pulizia urbana',
+    location: location || 'Rimini',
+    status: 'assigned',
+    createdAt: new Date().toISOString()
+  };
+
+  // Qui si potrebbe salvare nel database
+
+  res.json({
+    success: true,
+    message: 'Job assegnato con successo',
+    job
+  });
+});
