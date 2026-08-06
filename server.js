@@ -119,3 +119,7 @@ process.on('SIGINT', () => {
       });
   });
 });
+
+// Sensor routes - Arduino pH/EC for Urban Gardens
+const sensorRoutes = require('./routes/sensors');
+app.use('/api/sensors', sensorRoutes);
