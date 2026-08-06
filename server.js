@@ -20,6 +20,7 @@ const swapRoutes = require('./routes/swap');
 const animalRoutes = require('./routes/animals');
 const plantRoutes = require('./routes/plants');
 const rewardRoutes = require('./routes/rewards');
+const sensorRoutes = require('./routes/sensors');
 const contributorsRoutes = require('./routes/contributors');
 
 // Health check
@@ -36,6 +37,7 @@ app.use('/api/swap', swapRoutes);
 app.use('/api/animals', animalRoutes);
 app.use('/api/plants', plantRoutes);
 app.use('/api/rewards', rewardRoutes);
+app.use('/api/sensors', sensorRoutes);
 app.use('/api/contributors', contributorsRoutes);
 
 // Robot routes
