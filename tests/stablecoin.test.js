@@ -1,40 +1,77 @@
-const request = require('supertest');
+const assert = require('assert');
 const express = require('express');
+const http = require('http');
 const stablecoinRoutes = require('../routes/stablecoin');
 
 const app = express();
 app.use(express.json());
 app.use('/api/stablecoin', stablecoinRoutes);
 
-describe('Stablecoin API Routes (#737)', () => {
-  it('GET /api/stablecoin/rates — returns supported USDC and USDT stablecoins', async () => {
-    const res = await request(app).get('/api/stablecoin/rates');
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.supportedStablecoins).toHaveProperty('USDC');
-    expect(res.body.supportedStablecoins).toHaveProperty('USDT');
-  });
+const server = app.listen(0, async () => {
+  const port = server.address().port;
+  const baseUrl = `http://127.0.1.1:${port}/api/stablecoin`;
 
-  it('POST /api/stablecoin/convert — auto-converts MYZ to USDC', async () => {
-    const res = await request(app)
-      .post('/api/stablecoin/convert')
-      .send({ userId: 'user123', amountMYZ: 100, targetCoin: 'USDC' });
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.conversion.amountStablecoin).toEqual(10);
-  });
+  try {
+    // Test 1: GET /api/stablecoin/rates
+    const ratesRes = await fetchJson(`${baseUrl}/rates`, { method: 'GET' });
+    assert.strictEqual(ratesRes.status, 200);
+    assert.strictEqual(ratesRes.body.success, true);
+    assert.ok(ratesRes.body.supportedStablecoins.USDC);
+    assert.ok(ratesRes.body.supportedStablecoins.USDT);
+    console.log('✓ GET /api/stablecoin/rates passed');
 
-  it('POST /api/stablecoin/payout — processes stablecoin payout to wallet', async () => {
-    const res = await request(app)
-      .post('/api/stablecoin/payout')
-      .send({
+    // Test 2: POST /api/stablecoin/convert
+    const convertRes = await fetchJson(`${baseUrl}/convert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'user123', amountMYZ: 100, targetCoin: 'USDC' })
+    });
+    assert.strictEqual(convertRes.status, 200);
+    assert.strictEqual(convertRes.body.success, true);
+    assert.strictEqual(convertRes.body.conversion.amountStablecoin, 10);
+    console.log('✓ POST /api/stablecoin/convert passed');
+
+    // Test 3: POST /api/stablecoin/payout
+    const payoutRes = await fetchJson(`${baseUrl}/payout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         userId: 'user123',
         walletAddress: '0x19A58A880a6e76d78eB1A56fe5B15708E9F0073D',
         amountMYZ: 50,
         coinType: 'USDT'
-      });
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.payout.status).toEqual('settled');
-  });
+      })
+    });
+    assert.strictEqual(payoutRes.status, 200);
+    assert.strictEqual(payoutRes.body.success, true);
+    assert.strictEqual(payoutRes.body.payout.status, 'settled');
+    console.log('✓ POST /api/stablecoin/payout passed');
+
+    console.log('✅ ALL STABLECOIN TESTS PASSED CLEANLY');
+    server.close();
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Test failed:', err);
+    server.close();
+    process.exit(1);
+  }
 });
+
+function fetchJson(url, options) {
+  return new Promise((resolve, reject) => {
+    const req = http.request(url, options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, body: JSON.parse(data) });
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+    req.on('error', reject);
+    if (options.body) req.write(options.body);
+    req.end();
+  });
+}
