@@ -7,7 +7,7 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-const PORT = 5002;
+const PORT = 5003;
 
 // Endpoint per robot - riceve job
 app.post('/api/robot/assign', (req, res) => {
