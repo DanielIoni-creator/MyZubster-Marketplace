@@ -25,8 +25,10 @@ mongoose.connect('mongodb://localhost:27017/myzubster')
 // ============================================================
 const gardenRoutes = require('./routes/gardens');
 const nfcRoutes = require("./routes/nfc");
+const droneRoutes = require("./routes/drone");
 app.use('/api/gardens', gardenRoutes);
 app.use("/api/nfc", nfcRoutes);
+app.use("/api/drone", droneRoutes);
 
 // ============================================================
 // ROUTE SENSORS - Bounty #742
