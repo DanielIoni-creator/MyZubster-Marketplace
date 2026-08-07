@@ -29,6 +29,17 @@ const nurseRobotRoutes = require('./routes/nurseRobot');
 const hydraulicRobotRoutes = require('./routes/hydraulicRobot');
 const carpenterRobotRoutes = require('./routes/carpenterRobot');
 const constructionRobotRoutes = require('./routes/constructionRobot');
+const schedulerRoutes = require('./routes/scheduler');
+const robotArmRoutes = require('./routes/robotArm');
+const iotSensorRoutes = require('./routes/iotSensor');
+const seedMarketRoutes = require('./routes/seedMarket');
+const gardenMapRoutes = require('./routes/gardenMap');
+const dashboardRoutes = require('./routes/dashboard');
+const cryptoPaymentRoutes = require('./routes/cryptoPayment');
+const batchPaymentRoutes = require('./routes/batchPayment');
+const subscriptionRoutes = require('./routes/subscription');
+const fiatPaymentRoutes = require('./routes/fiatPayment');
+const urbanCleaningRoutes = require('./routes/urbanCleaning');
 
 // Rotte API
 app.use('/api/auth', authRoutes);
@@ -48,6 +59,17 @@ app.use('/api/nurse-robot', nurseRobotRoutes);
 app.use('/api/hydraulic-robot', hydraulicRobotRoutes);
 app.use('/api/carpenter-robot', carpenterRobotRoutes);
 app.use('/api/construction-robot', constructionRobotRoutes);
+app.use('/api/scheduler', schedulerRoutes);
+app.use('/api/robot-arm', robotArmRoutes);
+app.use('/api/iot-sensor', iotSensorRoutes);
+app.use('/api/seed-market', seedMarketRoutes);
+app.use('/api/garden-map', gardenMapRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/crypto-payment', cryptoPaymentRoutes);
+app.use('/api/batch-payment', batchPaymentRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/fiat-payment', fiatPaymentRoutes);
+app.use('/api/urban-cleaning', urbanCleaningRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
