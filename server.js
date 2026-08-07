@@ -24,7 +24,9 @@ mongoose.connect('mongodb://localhost:27017/myzubster')
 // ROUTE GARDENS - Bounty #743
 // ============================================================
 const gardenRoutes = require('./routes/gardens');
+const nfcRoutes = require("./routes/nfc");
 app.use('/api/gardens', gardenRoutes);
+app.use("/api/nfc", nfcRoutes);
 
 // ============================================================
 // ROUTE SENSORS - Bounty #742
@@ -103,5 +105,21 @@ app.post('/api/robot/assign', (req, res) => {
     success: true,
     message: 'Job assegnato con successo',
     job
+  });
+});
+
+// Root route - redirect al frontend o mostra stato
+app.get('/', (req, res) => {
+  res.json({
+    message: 'MyZubster Marketplace API',
+    version: '1.0.0',
+    status: 'online',
+    endpoints: {
+      health: '/api/health',
+      gardens: '/api/gardens',
+      sensors: '/api/sensors',
+      map: '/garden-map.html'
+    },
+    onion: 'http://auxfvwqi6zzerjmhmqqzbdppemwqpv7z4pe5fwcrlovnlr6pzt7ggjyd.onion'
   });
 });
