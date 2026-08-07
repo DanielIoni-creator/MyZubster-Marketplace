@@ -26,9 +26,11 @@ mongoose.connect('mongodb://localhost:27017/myzubster')
 const gardenRoutes = require('./routes/gardens');
 const nfcRoutes = require("./routes/nfc");
 const droneRoutes = require("./routes/drone");
+const selfReplicatingRobotRoutes = require("./routes/selfReplicatingRobot");
 app.use('/api/gardens', gardenRoutes);
 app.use("/api/nfc", nfcRoutes);
 app.use("/api/drone", droneRoutes);
+app.use("/api/self-replicating-robot", selfReplicatingRobotRoutes);
 
 // ============================================================
 // ROUTE SENSORS - Bounty #742
