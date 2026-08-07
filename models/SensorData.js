@@ -14,7 +14,6 @@ const SensorDataSchema = new mongoose.Schema({
     }
 });
 
-// Indici per query veloci
 SensorDataSchema.index({ gardenId: 1, timestamp: -1 });
 
 module.exports = mongoose.model('SensorData', SensorDataSchema);
