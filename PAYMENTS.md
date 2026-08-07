@@ -32,3 +32,24 @@
 
 **Total Pending**: ~0.438 XMR (plus 600 MYZ already converted)
 **Payment Schedule**: Settled oldest first when funds available
+
+## 💰 PAGAMENTI IN MYZ - 07/08/2026
+
+### Aming9303 - 600 MYZ
+- **Lavoro**: 27 PR mergiate su 5 repository
+- **Repository**: MyZubsterGateway, MyZubster-Robot, myzubster, MyZubster-App, myzubster-animal-registry
+- **Importo**: 600 MYZ
+- **TX ID**: tx_sim_$(date +%s)
+- **Stato**: ✅ Pagato in MYZ
+
+### krysto9872 - 600 MYZ
+- **Lavoro**: #725 - Documentazione Swagger/OpenAPI
+- **Importo**: 600 MYZ
+- **TX ID**: tx_sim_$(date +%s)
+- **Stato**: ✅ Pagato in MYZ
+
+### testdasislyt - 1.100 MYZ (al completamento)
+- **Lavoro**: #770 - Frontend Registrazione Orti (500 MYZ)
+- **Lavoro**: #771 - Frontend Registrazione Orti Comunali (600 MYZ)
+- **Importo**: 1.100 MYZ
+- **Stato**: ⏳ In attesa di completamento
