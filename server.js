@@ -24,6 +24,11 @@ const nftRoutes = require('./routes/nft');
 const antennaRoutes = require('./routes/antenna');
 const repeaterRoutes = require('./routes/repeater');
 const repeaterPaymentRoutes = require('./routes/repeaterPayment');
+const academicRobotRoutes = require('./routes/academicRobot');
+const nurseRobotRoutes = require('./routes/nurseRobot');
+const hydraulicRobotRoutes = require('./routes/hydraulicRobot');
+const carpenterRobotRoutes = require('./routes/carpenterRobot');
+const constructionRobotRoutes = require('./routes/constructionRobot');
 
 // Rotte API
 app.use('/api/auth', authRoutes);
@@ -38,6 +43,11 @@ app.use('/api/nft', nftRoutes);
 app.use('/api/antenna', antennaRoutes);
 app.use('/api/repeater', repeaterRoutes);
 app.use('/api/repeater-payment', repeaterPaymentRoutes);
+app.use('/api/academic', academicRobotRoutes);
+app.use('/api/nurse-robot', nurseRobotRoutes);
+app.use('/api/hydraulic-robot', hydraulicRobotRoutes);
+app.use('/api/carpenter-robot', carpenterRobotRoutes);
+app.use('/api/construction-robot', constructionRobotRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
