@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
 
 const app = express();
 
@@ -10,33 +9,36 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Servi file statici dalla cartella frontend
 app.use(express.static(path.join(__dirname, 'frontend')));
-app.use('/frontend', express.static(path.join(__dirname, 'frontend')));
 
-// Importa le route
+// Importa route
+const authRoutes = require('./routes/auth');
 const gardenRoutes = require('./routes/gardens');
 const sensorRoutes = require('./routes/sensors');
 const exchangeRoutes = require('./routes/exchange');
-const faunaRoutes = require('./routes/fauna');
 const mlRoutes = require('./routes/ml');
 const biodiversityRoutes = require('./routes/biodiversity');
+const faunaRoutes = require('./routes/fauna');
+const payoutRoutes = require('./routes/payout');
+const nftRoutes = require('./routes/nft');
 
 // Rotte API
+app.use('/api/auth', authRoutes);
 app.use('/api/gardens', gardenRoutes);
 app.use('/api/sensors', sensorRoutes);
 app.use('/api/exchange', exchangeRoutes);
-app.use('/api/fauna', faunaRoutes);
 app.use('/api/ml', mlRoutes);
 app.use('/api/biodiversity', biodiversityRoutes);
+app.use('/api/fauna', faunaRoutes);
+app.use('/api/payout', payoutRoutes);
+app.use('/api/nft', nftRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
         timestamp: new Date().toISOString(),
-        message: 'MyZubster Marketplace API - Modalità Gardens'
+        message: 'MyZubster Marketplace API'
     });
 });
 
@@ -45,147 +47,104 @@ app.get('/dashboard-hera', (req, res) => {
     res.sendFile('/var/www/myzubster.com/public/dashboard-hera.html');
 });
 
-// Endpoint per le statistiche dei robot
-app.get('/api/self-replicating-robot/stats', async (req, res) => {
-    try {
-        const Robot = mongoose.model('Robot');
-        const stats = await Robot.aggregate([
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: 1 },
-                    byStatus: { $push: "$status" },
-                    byType: { $push: "$type" },
-                    avgGeneration: { $avg: "$generation" }
-                }
-            }
-        ]);
-        
-        const byStatus = {};
-        const byType = {};
-        
-        if (stats.length > 0) {
-            stats[0].byStatus.forEach(s => {
-                byStatus[s] = (byStatus[s] || 0) + 1;
-            });
-            stats[0].byType.forEach(t => {
-                byType[t] = (byType[t] || 0) + 1;
-            });
-        }
-        
-        res.json({
-            success: true,
-            data: {
-                total: stats.length > 0 ? stats[0].total : 0,
-                byStatus: Object.keys(byStatus).map(key => ({ _id: key, count: byStatus[key] })),
-                byType: Object.keys(byType).map(key => ({ _id: key, count: byType[key] })),
-                avgGeneration: stats.length > 0 ? stats[0].avgGeneration : 0,
-                templates: 1,
-                activeAssemblies: 0,
-                totalMYZSpent: 1250,
-                totalXMRSpent: 0.05
-            }
-        });
-    } catch (error) {
-        res.json({
-            success: true,
-            data: {
-                total: 9,
-                byStatus: [
-                    { _id: 'building', count: 7 },
-                    { _id: 'active', count: 2 }
-                ],
-                byType: [
-                    { _id: 'builder', count: 9 }
-                ],
-                avgGeneration: 2.8,
-                templates: 1,
-                activeAssemblies: 0,
-                totalMYZSpent: 1250,
-                totalXMRSpent: 0.05
-            }
-        });
-    }
-});
-
-// Endpoint per le istanze dei robot
-app.get('/api/self-replicating-robot/instances', async (req, res) => {
-    try {
-        const Robot = mongoose.model('Robot');
-        const robots = await Robot.find().populate('templateId');
-        res.json({ success: true, data: robots, count: robots.length });
-    } catch (error) {
-        // Dati mock per fallback
-        res.json({
-            success: true,
-            data: [
-                { _id: '6a75394c84c3bdd34c108b0c', generation: 1, status: 'active', name: 'EVA Builder Bot #1', type: 'builder' },
-                { _id: '6a75394c84c3bdd34c108b08', generation: 1, status: 'active', name: 'EVA Builder Bot #2', type: 'builder' },
-                { _id: '6a75398584c3bdd34c108b39', generation: 2, status: 'building', name: 'EVA Builder Bot #2 Clone #1', type: 'builder' },
-                { _id: '6a75398584c3bdd34c108b3d', generation: 2, status: 'building', name: 'EVA Builder Bot #2 Clone #2', type: 'builder' },
-                { _id: '6a7539c284c3bdd34c108b7a', generation: 3, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1', type: 'builder' },
-                { _id: '6a753a1584c3bdd34c108bbd', generation: 4, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1 Clone #1', type: 'builder' },
-                { _id: '6a753a1584c3bdd34c108bc1', generation: 4, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1 Clone #2', type: 'builder' },
-                { _id: '6a753a3484c3bdd34c108bf4', generation: 4, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1 Clone #1', type: 'builder' },
-                { _id: '6a753a3484c3bdd34c108bf8', generation: 4, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1 Clone #2', type: 'builder' }
+// Robot stats
+app.get('/api/self-replicating-robot/stats', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            total: 9,
+            byStatus: [
+                { _id: 'building', count: 7 },
+                { _id: 'active', count: 2 }
             ],
-            count: 9
-        });
-    }
+            byType: [{ _id: 'builder', count: 9 }],
+            avgGeneration: 2.8
+        }
+    });
 });
 
-// Endpoint per clonare un robot
-app.post('/api/self-replicating-robot/clone/:id', async (req, res) => {
+// Robot instances
+app.get('/api/self-replicating-robot/instances', (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { _id: '1', generation: 1, status: 'active', name: 'EVA Builder Bot #1' },
+            { _id: '2', generation: 1, status: 'active', name: 'EVA Builder Bot #2' },
+            { _id: '3', generation: 2, status: 'building', name: 'EVA Builder Bot #2 Clone #1' },
+            { _id: '4', generation: 2, status: 'building', name: 'EVA Builder Bot #2 Clone #2' },
+            { _id: '5', generation: 3, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1' },
+            { _id: '6', generation: 4, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1 Clone #1' },
+            { _id: '7', generation: 4, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1 Clone #2' },
+            { _id: '8', generation: 4, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1 Clone #1' },
+            { _id: '9', generation: 4, status: 'building', name: 'EVA Builder Bot #2 Clone #2 Clone #1 Clone #2' }
+        ],
+        count: 9
+    });
+});
+
+// Clone robot
+app.post('/api/self-replicating-robot/clone/:id', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Cloning started: 2 robots being built',
+        data: {
+            sourceRobot: req.params.id,
+            clones: ['new-id-1', 'new-id-2'],
+            generation: 4,
+            quantity: 2,
+            cost: 300
+        }
+    });
+});
+
+// Funzione WebSocket
+function setupWebSocket(server) {
     try {
-        const { id } = req.params;
-        const { quantity = 2, improvements = {} } = req.body;
-        
-        // Simula clone
-        res.json({
-            success: true,
-            message: `Cloning started: ${quantity} robots being built`,
-            data: {
-                sourceRobot: id,
-                clones: [
-                    '6a753a3484c3bdd34c108bf4',
-                    '6a753a3484c3bdd34c108bf8'
-                ],
-                generation: 4,
-                quantity: quantity,
-                cost: quantity * 150
-            }
+        const WebSocket = require('ws');
+        const wss = new WebSocket.Server({ server, path: '/ws' });
+        wss.on('connection', (ws) => {
+            console.log('🟢 WebSocket client connected');
+            ws.send(JSON.stringify({ type: 'connected', message: 'Welcome to MyZubster WebSocket!' }));
+            ws.on('message', (message) => {
+                console.log('📩 Received:', message.toString());
+                ws.send(JSON.stringify({ type: 'echo', data: message.toString() }));
+            });
+            ws.on('close', () => {
+                console.log('🔴 WebSocket client disconnected');
+            });
         });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.log('📡 WebSocket server running on /ws');
+    } catch (err) {
+        console.error('❌ WebSocket error:', err.message);
     }
-});
+}
 
-// Connessione al database e avvio del server
+// Avvia server
 const PORT = process.env.PORT || 4000;
 
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/myzubster')
     .then(() => {
         console.log('✅ MongoDB connesso');
-        app.listen(PORT, () => {
+        const server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 Server avviato sulla porta ${PORT}`);
             console.log(`🌐 URL: http://localhost:${PORT}`);
-            console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
-            console.log(`🗺️  Mappa: http://localhost:${PORT}/garden-map.html`);
-            console.log(`🌱 Gardens API: http://localhost:${PORT}/api/gardens`);
-            console.log(`📡 Sensors API: http://localhost:${PORT}/api/sensors`);
-            console.log(`🤖 ML API: http://localhost:${PORT}/api/ml`);
-            console.log(`🌿 Biodiversity API: http://localhost:${PORT}/api/biodiversity`);
-            console.log(`✅ Gardens routes loaded`);
-            console.log(`✅ Sensors routes loaded`);
-            console.log(`✅ ML routes loaded`);
-            console.log(`✅ Biodiversity routes loaded`);
-            console.log(`✅ Frontend servito da /frontend`);
+            console.log(`🔍 Health: http://localhost:${PORT}/api/health`);
+            console.log(`🔐 Auth: http://localhost:${PORT}/api/auth`);
+            console.log(`🌱 Gardens: http://localhost:${PORT}/api/gardens`);
+            console.log(`📡 Sensors: http://localhost:${PORT}/api/sensors`);
+            console.log(`🌿 Exchange: http://localhost:${PORT}/api/exchange`);
+            console.log(`🧠 ML: http://localhost:${PORT}/api/ml`);
+            console.log(`🦋 Fauna: http://localhost:${PORT}/api/fauna`);
+            console.log(`💎 Payout: http://localhost:${PORT}/api/payout`);
+            console.log(`🎨 NFT: http://localhost:${PORT}/api/nft`);
+            console.log(`✅ Tutte le route caricate!`);
         });
+        setupWebSocket(server);
     })
     .catch(err => {
-        console.error('❌ Errore connessione MongoDB:', err);
-        // Avvia comunque il server senza database
-        app.listen(PORT, () => {
+        console.error('❌ Errore DB:', err.message);
+        const server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 Server avviato sulla porta ${PORT} (senza DB)`);
         });
+        setupWebSocket(server);
     });
