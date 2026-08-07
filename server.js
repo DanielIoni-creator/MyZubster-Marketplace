@@ -21,6 +21,9 @@ const biodiversityRoutes = require('./routes/biodiversity');
 const faunaRoutes = require('./routes/fauna');
 const payoutRoutes = require('./routes/payout');
 const nftRoutes = require('./routes/nft');
+const antennaRoutes = require('./routes/antenna');
+const repeaterRoutes = require('./routes/repeater');
+const repeaterPaymentRoutes = require('./routes/repeaterPayment');
 
 // Rotte API
 app.use('/api/auth', authRoutes);
@@ -32,6 +35,9 @@ app.use('/api/biodiversity', biodiversityRoutes);
 app.use('/api/fauna', faunaRoutes);
 app.use('/api/payout', payoutRoutes);
 app.use('/api/nft', nftRoutes);
+app.use('/api/antenna', antennaRoutes);
+app.use('/api/repeater', repeaterRoutes);
+app.use('/api/repeater-payment', repeaterPaymentRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -137,6 +143,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/myzubster
             console.log(`🦋 Fauna: http://localhost:${PORT}/api/fauna`);
             console.log(`💎 Payout: http://localhost:${PORT}/api/payout`);
             console.log(`🎨 NFT: http://localhost:${PORT}/api/nft`);
+            console.log(`📡 Antenna: http://localhost:${PORT}/api/antenna`);
+            console.log(`🔁 Repeater: http://localhost:${PORT}/api/repeater`);
+            console.log(`💰 Repeater Payment: http://localhost:${PORT}/api/repeater-payment`);
             console.log(`✅ Tutte le route caricate!`);
         });
         setupWebSocket(server);
