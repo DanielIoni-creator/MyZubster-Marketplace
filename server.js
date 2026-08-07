@@ -19,6 +19,7 @@ app.use('/frontend', express.static(path.join(__dirname, 'frontend')));
 const gardenRoutes = require('./routes/gardens');
 const sensorRoutes = require('./routes/sensors');
 const exchangeRoutes = require('./routes/exchange');
+const faunaRoutes = require('./routes/fauna');
 const mlRoutes = require('./routes/ml');
 const biodiversityRoutes = require('./routes/biodiversity');
 
@@ -26,6 +27,7 @@ const biodiversityRoutes = require('./routes/biodiversity');
 app.use('/api/gardens', gardenRoutes);
 app.use('/api/sensors', sensorRoutes);
 app.use('/api/exchange', exchangeRoutes);
+app.use('/api/fauna', faunaRoutes);
 app.use('/api/ml', mlRoutes);
 app.use('/api/biodiversity', biodiversityRoutes);
 

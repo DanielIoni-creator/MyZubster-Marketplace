@@ -1,57 +1,41 @@
 const mongoose = require('mongoose');
 
-const gardenSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  location: {
-    type: {
-      type: String,
-      enum: ['Point'],
-      default: 'Point'
+const GardenSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    address: { type: String, required: true },
+    comune: { type: String, required: true, index: true }, // Nome del comune
+    comuneId: { type: String, index: true }, // ID univoco del comune
+    location: {
+        type: { type: String, enum: ['Point'], default: 'Point' },
+        coordinates: { type: [Number], required: true } // [lng, lat]
     },
-    coordinates: {
-      type: [Number],
-      required: true,
-      index: '2dsphere'
-    }
-  },
-  address: {
-    type: String,
-    required: true
-  },
-  size: {
-    type: Number,
-    min: 0
-  },
-  crops: [{
-    type: String,
-    trim: true
-  }],
-  sensors: [{
-    type: String
-  }],
-  description: {
-    type: String,
-    maxlength: 500
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
+    size: { type: Number, default: 0 },
+    beds: { type: Number, default: 0 },
+    crops: [String],
+    type: { 
+        type: String, 
+        enum: ['urban', 'comune', 'community', 'school', 'rooftop', 'park', 'social'],
+        default: 'urban'
+    },
+    status: {
+        type: String,
+        enum: ['active', 'maintenance', 'planning', 'inactive'],
+        default: 'active'
+    },
+    isPublic: { type: Boolean, default: true },
+    // Dati amministrativi
+    office: String,
+    manager: String,
+    email: String,
+    services: [String],
+    notes: String,
+    // Metadata
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
-gardenSchema.index({ location: '2dsphere' });
+// Indici per query veloci
+GardenSchema.index({ comune: 1, status: 1 });
+GardenSchema.index({ location: '2dsphere' });
 
-gardenSchema.pre('save', function(next) {
-  this.updatedAt = new Date();
-  next();
-});
-
-module.exports = mongoose.model('Garden', gardenSchema);
+module.exports = mongoose.model('Garden', GardenSchema);
