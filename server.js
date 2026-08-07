@@ -47,6 +47,7 @@ const xmrRoutes = require('./routes/xmr');
 const gl1BridgeRoutes = require('./routes/gl1Bridge');
 const stablecoinRoutes = require('./routes/stablecoin');
 const cryptoPaymentRoutes = require('./routes/crypto_payments');
+const dashboardOrtiRoutes = require('./routes/dashboard_orti');
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -71,6 +72,7 @@ app.use('/api/xmr', xmrRoutes);
 app.use('/api/gl1', gl1BridgeRoutes);
 app.use('/api/stablecoin', stablecoinRoutes);
 app.use('/api/crypto', cryptoPaymentRoutes);
+app.use('/api/dashboard/orti', dashboardOrtiRoutes);
 
 // Robot routes
 try {
